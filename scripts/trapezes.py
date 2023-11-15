@@ -1,13 +1,14 @@
 import pygame
 import math as m
+import random
 
-class Trapezes:
+class Trapeze:
     def __init__(self, game, position, length, radius):
         self.game = game
         self.position = position  # Position of the pendulum's anchor point
         self.length = length
         self.radius = radius
-        self.angle = -20  # Initial angle
+        self.angle = -170  # Initial angle
         self.angular_velocity = -0.002
         self.swinging = True
         self.attached_entity = None
@@ -15,32 +16,27 @@ class Trapezes:
         self.vertical_velocity = 0  # Vertical velocity
 
     def rect(self):
-        # Coordinates of one end of the rod
+        # # Coordinates of one end of the rod
+        # end_x = self.position[0] + self.length * m.sin(self.angle)
+        # end_y = self.position[1] + self.length * m.cos(self.angle)
+
+        # # Top-left corner of the rectangle
+        # top_left_x = min(self.position[0], end_x) - self.radius
+        # top_left_y = min(self.position[1], end_y) - self.radius
+
+        # # Dimensions of the rectangle
+        # rect_width = abs(end_x - self.position[0]) + 2 * self.radius
+        # rect_height = abs(end_y - self.position[1]) + 2 * self.radius
+
+        # return pygame.Rect(top_left_x, top_left_y, rect_width, rect_height)
         end_x = self.position[0] + self.length * m.sin(self.angle)
         end_y = self.position[1] + self.length * m.cos(self.angle)
-
-        # Top-left corner of the rectangle
-        top_left_x = min(self.position[0], end_x) - self.radius
-        top_left_y = min(self.position[1], end_y) - self.radius
-
-        # Dimensions of the rectangle
-        rect_width = abs(end_x - self.position[0]) + 2 * self.radius
-        rect_height = abs(end_y - self.position[1]) + 2 * self.radius
-
-        return pygame.Rect(top_left_x, top_left_y, rect_width, rect_height)
+        return pygame.Rect(end_x - self.radius, end_y - self.radius, self.radius * 2, self.radius * 2)
 
     def attach_entity(self, entity):
         self.attached_entity = entity
         self.swinging = True
-        # Calculate the attachment point based on the collision
-        collision_point = entity.pos
-        self.attachment_fraction = self.calculate_attachment_fraction(collision_point)
-
-    def calculate_attachment_fraction(self, collision_point):
-        # Calculate the distance from the rod's pivot to the collision point
-        distance = m.sqrt((collision_point[0] - self.position[0])**2 + (collision_point[1] - self.position[1])**2)
-        # Calculate the fraction along the rod's length
-        return distance / self.length
+        self.angular_velocity = self.attached_entity.velocity[0]
 
     def detach_entity(self):
         if self.attached_entity:
@@ -73,8 +69,8 @@ class Trapezes:
                 self.vertical_velocity = 0
 
             # Update the position of the attached entity
-            attached_x = self.position[0] + self.length * self.attachment_fraction * m.sin(self.angle)
-            attached_y = self.position[1] + self.length * self.attachment_fraction * m.cos(self.angle) + self.vertical_velocity
+            attached_x = self.position[0] + self.length * m.sin(self.angle)
+            attached_y = self.position[1] + self.length * m.cos(self.angle) + self.vertical_velocity
 
             self.attached_entity.pos = [attached_x - self.radius, attached_y - self.radius]
 
@@ -83,5 +79,24 @@ class Trapezes:
         end_x = self.position[0] + self.length * m.sin(self.angle)
         end_y = self.position[1] + self.length * m.cos(self.angle)
         # Draw the pendulum
-        pygame.draw.line(surface, (255, 255, 255), (self.position[0] - offset[0], self.position[1] - offset[1]), (end_x - offset[0], end_y - offset[1]), 4)
+        pygame.draw.line(surface, (0, 0, 10), (self.position[0] - offset[0], self.position[1] - offset[1]), (end_x - offset[0], end_y - offset[1]), 4)
         pygame.draw.circle(surface, (255, 0, 0), (round(end_x - offset[0]), round(end_y - offset[1])), self.radius)
+
+class Trapezes:
+
+    def __init__(self, game, count = 16) -> None:
+        self.trapezes = []
+        self.game = game
+
+        for i in range(count):
+            self.trapezes.append(Trapeze(self.game,(random.randrange(0,100), random.randrange(80,120)), 70, 5))
+
+        # self.balloons.sort(key=lambda x: x.depth)
+    
+    def update(self):
+        for trapeze in self.trapezes:
+            trapeze.update()
+
+    def render(self, surf, offset=(0,0)):
+        for trapeze in self.trapezes:
+            trapeze.draw(surf, offset)

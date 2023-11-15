@@ -9,6 +9,7 @@ class Acrobat:
         self.velocity = [0,0]
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
         self.points = 0
+        self.trapeze = None
 
 
     def rect(self):

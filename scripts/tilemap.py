@@ -1,4 +1,5 @@
 import pygame
+import random
 
 NEIGHBOR_TILES = [(-1,-1),(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1),(-1,0),(0,0)]
 #   - 1  0  1
@@ -15,8 +16,12 @@ class Tilemap:
         self.tilemap = {}
         self.offgrid_tiles = []
         
-        for i in range(10):
-            self.tilemap[str(i) + ';14'] = {'type': 'sand','variant': 0, 'pos':(i, 14)}
+        hole_probability = 0.1  # 10% chance of a hole
+
+        for i in range(100):
+            if random.random() >= hole_probability:  # Only add a tile if the random number is greater than the hole probability
+                self.tilemap[str(i) + ';14'] = {'type': 'sand', 'variant': 0, 'pos': (i, 14)}
+
     
     def tiles_around(self, pos):
         tiles = []
@@ -46,7 +51,5 @@ class Tilemap:
         for loc in self.tilemap:
             
             #get the values from de dict
-            print(self.tilemap[loc])
             tile = self.tilemap[loc]
-            print(self.game.assets)
             surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
