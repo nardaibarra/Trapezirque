@@ -34,6 +34,7 @@ class Acrobat:
         return pygame.Rect(self.pos[0] , self.pos[1] , self.size[0], self.size[1])
     
     def set_action(self, action):
+        print(action)
         if action != self.action:
             self.action = action
             self.animation = self.game.assets[self.type + '/' + self.action].copy()
@@ -104,7 +105,10 @@ class Acrobat:
         if self.air_time > 4:
             self.set_action('jump')
         else:
-            self.set_action('idle')
+            if movement[0] == 0:
+                self.set_action('idle')
+            else:
+                self.set_action('walking')
         
           
     

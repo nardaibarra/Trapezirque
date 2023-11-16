@@ -25,13 +25,14 @@ class Trapezirque:
 
         self.assets = {
             'welcome': load_images('welcome'),
-            'sand': load_images('tiles/sand'),
+            'sand': load_images('tiles/floor'),
             # 'acrobat': load_image('acrobat/acrobat_idle.png'),
             'background': load_image('bg.png'),
             'game_over': load_image('game_over_2.png'),
             'baloons': load_images('balloons'),
             'acrobat/jump': Animation(load_images('acrobat/jump')),
-            'acrobat/idle': Animation(load_images('acrobat/idle'))
+            'acrobat/idle': Animation(load_images('acrobat/idle')),
+            'acrobat/walking': Animation(load_images('acrobat/walking'))
         }
         
 
