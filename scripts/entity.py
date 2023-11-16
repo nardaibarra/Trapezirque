@@ -1,44 +1,27 @@
 import pygame
 
-class Acrobat:
+class Entity:
     def __init__(self, game, e_type, pos, size) -> None:
         self.game = game
         self.type = e_type
         self.pos = list(pos)
-        self.initial_pos = list(pos)
         self.size = size
         self.velocity = [0,0]
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
-        self.trapeze = None
-        self.jumps = 2
-        
-        self.air_time = 0
+
         
         self.action = ''
         self.anim_offset = (-1, -1)
         self.flip = False
-        
         self.set_action('idle')
     
-    def reset(self):
-        self.pos = self.initial_pos
-        self.velocity = [0,0]
-        self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
-        self.trapeze = None
-        self.air_time = 0
-        self.anim_offset = (-1, -1)
-        self.flip = False
-        self.set_action('idle')
-
     def rect(self):
         return pygame.Rect(self.pos[0] , self.pos[1] , self.size[0], self.size[1])
     
     def set_action(self, action):
-        print(action)
         if action != self.action:
             self.action = action
             self.animation = self.game.assets[self.type + '/' + self.action].copy()
-            
             
 
     def update(self, tilemap, movement = (0,0)):
@@ -78,16 +61,9 @@ class Acrobat:
             self.flip = True        
 
         self.velocity[1] = self.velocity[1] + 0.1 
+        #self.velocity[1] = min(3, self.velocity[1] + 0.1 )
 
-        damping_factor = 0.98
-        self.velocity[0] *= damping_factor
-        self.velocity[1] *= damping_factor
 
-        # Stop movement if velocity is very low
-        if abs(self.velocity[0]) < 0.01:
-            self.velocity[0] = 0
-        if abs(self.velocity[1]) < 0.01:
-            self.velocity[1] = 0
             
         if self.collisions['down'] or self.collisions['up'] :
             self.velocity[1] = 0
@@ -101,7 +77,38 @@ class Acrobat:
         if self.collisions['down']:
             self.air_time = 0
             self.jumps = 2
+    
+    def render(self, surf,  offset=(0,0)):
+        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - 8 - offset[1] + self.anim_offset[1]))
+        # surf.blit(self.game.assets['acrobat'], (self.pos[0] - offset[0], self.pos[1] - 8 - offset[1]))
         
+class Character(Entity):
+    def __init__(self, game, e_type, pos, size) -> None:
+        super().__init__(game, e_type, pos, size)
+
+    def update(self, tilemap, movement=(0, 0)):
+        return super().update(tilemap, movement)
+
+class Player(Entity):
+    def __init__(self, game, pos, size) -> None:
+        super().__init__(game,'acrobat', pos, size)
+        self.trapeze = None
+        self.jumps = 2
+        self.air_time = 0
+    
+    def update(self, tilemap, movement=(0, 0)):
+        super().update(tilemap, movement)
+
+        damping_factor = 0.98
+        self.velocity[0] *= damping_factor
+        # self.velocity[1] *= damping_factor
+
+        # Stop movement if velocity is very low
+        if abs(self.velocity[0]) < 0.01:
+            self.velocity[0] = 0
+        if abs(self.velocity[1]) < 0.01:
+            self.velocity[1] = 0
+
         if self.air_time > 4:
             self.set_action('jump')
         else:
@@ -109,13 +116,7 @@ class Acrobat:
                 self.set_action('idle')
             else:
                 self.set_action('walking')
-        
-          
     
-    def render(self, surf,  offset=(0,0)):
-        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - 8 - offset[1] + self.anim_offset[1]))
-        # surf.blit(self.game.assets['acrobat'], (self.pos[0] - offset[0], self.pos[1] - 8 - offset[1]))
-        
     def jump(self):
         if self.jumps:
             self.velocity[1] = -3

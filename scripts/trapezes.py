@@ -8,7 +8,7 @@ class Trapeze:
         self.position = position  # Position of the pendulum's anchor point
         self.length = length
         self.radius = radius
-        self.angle = -170  # Initial angle
+        self.angle = 5.5  # Initial angle
         self.angular_velocity = -0.002
         self.swinging = True
         self.attached_entity = None
@@ -16,8 +16,8 @@ class Trapeze:
         self.vertical_velocity = 0  # Vertical velocity
 
     def reset(self):
-        self.angle = -170  # Initial angle
-        self.angular_velocity = -0.002
+        self.angle = 1.6  # Initial angle
+        self.angular_velocity = 0.3
         self.swinging = True
         self.attached_entity = None
         self.vertical_velocity = 0  # Vertical velocity
@@ -89,25 +89,25 @@ class Trapeze:
         pygame.draw.line(surface, (0, 0, 10), (self.position[0] - offset[0], self.position[1] - offset[1]), (end_x - offset[0], end_y - offset[1]), 4)
         pygame.draw.circle(surface, (255, 0, 0), (round(end_x - offset[0]), round(end_y - offset[1])), self.radius)
 
-class Trapezes:
+# class Trapezes:
 
-    def __init__(self, game, count = 16) -> None:
-        self.trapezes = []
-        self.game = game
+#     def __init__(self, game, count = 16) -> None:
+#         self.trapezes = []
+#         self.game = game
 
-        for i in range(count):
-            self.trapezes.append(Trapeze(self.game,(random.randrange(80,200), random.randrange(90,120)), 70, 5))
+#         for i in range(count):
+#             self.trapezes.append(Trapeze(self.game,(random.randrange(80,200), random.randrange(90,120)), 70, 5))
 
-        # self.balloons.sort(key=lambda x: x.depth)
+#         # self.balloons.sort(key=lambda x: x.depth)
     
-    def update(self):
-        for trapeze in self.trapezes:
-            trapeze.update()
+#     def update(self):
+#         for trapeze in self.trapezes:
+#             trapeze.update()
 
-    def render(self, surf, offset=(0,0)):
-        for trapeze in self.trapezes:
-            trapeze.draw(surf, offset)
+#     def render(self, surf, offset=(0,0)):
+#         for trapeze in self.trapezes:
+#             trapeze.draw(surf, offset)
 
-    def reset(self):
-        for trapeze in self.trapezes:
-            trapeze.reset()
+#     def reset(self):
+#         for trapeze in self.trapezes:
+#             trapeze.reset()

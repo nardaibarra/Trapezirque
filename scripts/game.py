@@ -1,10 +1,10 @@
 import pygame
 import sys
-from acrobat import Acrobat
+from entity import Player, Character
 from tilemap import Tilemap
 from utils import load_image, load_images, Animation
 from balloons import Balloons
-from trapezes import Trapezes
+from trapezes import Trapeze
 
 class Trapezirque:
     def __init__(self) -> None:
@@ -25,22 +25,37 @@ class Trapezirque:
 
         self.assets = {
             'welcome': load_images('welcome'),
-            'sand': load_images('tiles/floor'),
-            # 'acrobat': load_image('acrobat/acrobat_idle.png'),
-            'background': load_image('bg.png'),
             'game_over': load_image('game_over_2.png'),
+            'background': load_image('bg.png'),
+            'floor': load_images('tiles/floor'),
+            'circus': load_images('tiles/circus'),
             'baloons': load_images('balloons'),
-            'acrobat/jump': Animation(load_images('acrobat/jump')),
-            'acrobat/idle': Animation(load_images('acrobat/idle')),
-            'acrobat/walking': Animation(load_images('acrobat/walking'))
+            'spawners': load_images('tiles/spawners'),
+            'monkey/idle': Animation(load_images('monkey/idle'),10),
+            'clown/idle': Animation(load_images('clown/idle'),10),
+            'acrobat/jump': Animation(load_images('player/jump')),
+            'acrobat/idle': Animation(load_images('player/idle')),
+            'acrobat/walking': Animation(load_images('player/walking'))
         }
         
 
         self.baloons = Balloons(self,self.assets['baloons'], 16, count=15)
-        self.acrobat = Acrobat(self, 'acrobat', (50,208), (16,16))
+        self.acrobat = Player(self, (50,208), (16,16))
         self.tilemap = Tilemap(self, tile_size=16)
+        self.tilemap.load('map.json')
+        self.characters =[]
+        self.trapezes = []
+        for spawner in self.tilemap.extract([('spawners', 0),('spawners', 1),('spawners',2),('spawners',3)]):
+            if spawner['variant'] == 0:
+                self.acrobat.pos = spawner['pos']
+            elif spawner['variant'] == 1:
+                self.characters.append(Character(self, 'clown', spawner['pos'],(32,16)))
+            elif spawner['variant'] == 2:
+                self.characters.append(Character(self, 'monkey', spawner['pos'],(32,16)))
+            elif spawner['variant'] == 3:
+                self.trapezes.append(Trapeze(self,spawner['pos'], 62, 5))
+        print(self.trapezes)
         self.scroll = [0,0]
-        self.trapezes = Trapezes(self, 2)
 
     def reset_game(self):
         self.movement = [False, False]
@@ -110,16 +125,26 @@ class Trapezirque:
 
 
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
-            self.tilemap.render(self.display, offset=render_scroll)
+
             self.baloons.update()
             self.baloons.render(self.display, offset=render_scroll)
+            self.tilemap.render(self.display, offset=render_scroll)
+
+            for character in self.characters.copy():
+                character.update(self.tilemap, (0,0))
+                character.render(self.display, offset = render_scroll)
+            
+            for trapeze in self.trapezes.copy():
+                trapeze.update()
+                trapeze.draw(self.display, offset = render_scroll)
+
             self.acrobat.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             self.acrobat.render(self.display, offset=render_scroll)
             # Draw the score to the screen
             score_text = self.font.render(f'Score: {self.score}', True, (0,0,0))
             self.display.blit(score_text, (10, 10))
-            self.trapezes.render(self.display, offset=self.scroll)
-            self.trapezes.update()
+            # self.trapezes.render(self.display, offset=self.scroll)
+            # self.trapezes.update()
 
 
             for event in pygame.event.get():
@@ -136,7 +161,7 @@ class Trapezirque:
                         
                     if event.key == pygame.K_SPACE:
                         # Check for collision with the pendulum when space is pressed
-                        for trapeze in self.trapezes.trapezes:
+                        for trapeze in self.trapezes:
                             if trapeze.rect().colliderect(self.acrobat.rect()):
                                 trapeze.attach_entity(self.acrobat)
                                 self.acrobat.trapeze = trapeze
@@ -164,7 +189,7 @@ class Trapezirque:
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        self.reset_game()
+
                         return self.run()
 
             self.display.blit(self.assets['game_over'], (0,0))
