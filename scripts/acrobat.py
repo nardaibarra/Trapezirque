@@ -5,10 +5,10 @@ class Acrobat:
         self.game = game
         self.type = e_type
         self.pos = list(pos)
+        self.initial_pos = list(pos)
         self.size = size
         self.velocity = [0,0]
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
-        self.points = 0
         self.trapeze = None
         self.jumps = 2
         
@@ -19,7 +19,16 @@ class Acrobat:
         self.flip = False
         
         self.set_action('idle')
-        
+    
+    def reset(self):
+        self.pos = self.initial_pos
+        self.velocity = [0,0]
+        self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
+        self.trapeze = None
+        self.air_time = 0
+        self.anim_offset = (-1, -1)
+        self.flip = False
+        self.set_action('idle')
 
     def rect(self):
         return pygame.Rect(self.pos[0] , self.pos[1] , self.size[0], self.size[1])

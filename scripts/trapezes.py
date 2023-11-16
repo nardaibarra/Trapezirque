@@ -15,6 +15,13 @@ class Trapeze:
         self.gravity = 0.01  # Gravity effect
         self.vertical_velocity = 0  # Vertical velocity
 
+    def reset(self):
+        self.angle = -170  # Initial angle
+        self.angular_velocity = -0.002
+        self.swinging = True
+        self.attached_entity = None
+        self.vertical_velocity = 0  # Vertical velocity
+
     def rect(self):
         # # Coordinates of one end of the rod
         # end_x = self.position[0] + self.length * m.sin(self.angle)
@@ -36,7 +43,7 @@ class Trapeze:
     def attach_entity(self, entity):
         self.attached_entity = entity
         self.swinging = True
-        self.angular_velocity = self.attached_entity.velocity[0]
+        self.angular_velocity = self.attached_entity.velocity[0] * 5
 
     def detach_entity(self):
         if self.attached_entity:
@@ -70,9 +77,9 @@ class Trapeze:
 
             # Update the position of the attached entity
             attached_x = self.position[0] + self.length * m.sin(self.angle)
-            attached_y = self.position[1] + self.length * m.cos(self.angle) + self.vertical_velocity
+            attached_y = self.position[1] + self.length * m.cos(self.angle)
 
-            self.attached_entity.pos = [attached_x - self.radius, attached_y - self.radius]
+            self.attached_entity.pos = [attached_x - (self.radius*2), attached_y - self.radius]
 
     def draw(self, surface, offset=(0, 0)):
         # Calculate pendulum's end position based on angle
@@ -89,7 +96,7 @@ class Trapezes:
         self.game = game
 
         for i in range(count):
-            self.trapezes.append(Trapeze(self.game,(random.randrange(0,100), random.randrange(80,120)), 70, 5))
+            self.trapezes.append(Trapeze(self.game,(random.randrange(80,200), random.randrange(90,120)), 70, 5))
 
         # self.balloons.sort(key=lambda x: x.depth)
     
@@ -100,3 +107,7 @@ class Trapezes:
     def render(self, surf, offset=(0,0)):
         for trapeze in self.trapezes:
             trapeze.draw(surf, offset)
+
+    def reset(self):
+        for trapeze in self.trapezes:
+            trapeze.reset()

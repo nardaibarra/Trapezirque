@@ -46,8 +46,8 @@ class Balloons:
 
     def render(self, surf, offset=(0,0)):
         for balloon in self.balloons:
-            print(f'{balloon.pos[0]}, {balloon.pos[1]}')
-            print(f'Acrobat: {self.game.acrobat.pos[0]}, {self.game.acrobat.pos[1]}')
+            # print(f'{balloon.pos[0]}, {balloon.pos[1]}')
+            # print(f'Acrobat: {self.game.acrobat.pos[0]}, {self.game.acrobat.pos[1]}')
             
             
             balloon.render(surf, offset)
