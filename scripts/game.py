@@ -2,7 +2,7 @@ import pygame
 import sys
 from acrobat import Acrobat
 from tilemap import Tilemap
-from utils import load_image, load_images
+from utils import load_image, load_images, Animation
 from balloons import Balloons
 from trapezes import Trapezes
 
@@ -24,13 +24,17 @@ class Trapezirque:
 
         self.assets = {
             'sand': load_images('tiles/sand'),
-            'acrobat': load_image('acrobat/acrobat_idle2.png'),
+            # 'acrobat': load_image('acrobat/acrobat_idle.png'),
             'background': load_image('bg.png'),
             'game_over': load_image('game_over.png'),
             'baloons': load_images('balloons'),
+            'acrobat/jump': Animation(load_images('acrobat/jump')),
+            'acrobat/idle': Animation(load_images('acrobat/idle'))
         }
+        
+        print(self.assets)
 
-        self.baloons = Balloons(self,self.assets['baloons'], 16, count=3)
+        self.baloons = Balloons(self,self.assets['baloons'], 16, count=15)
         self.acrobat = Acrobat(self, 'acrobat', (50,208), (16,16))
         self.tilemap = Tilemap(self, tile_size=16)
         self.scroll = [0,0]
@@ -86,7 +90,7 @@ class Trapezirque:
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = True
                     if event.key == pygame.K_UP:
-                        self.acrobat.velocity[1] = -3
+                        self.acrobat.jump()
                         
                     if event.key == pygame.K_SPACE:
                         # Check for collision with the pendulum when space is pressed
