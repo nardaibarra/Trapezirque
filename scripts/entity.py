@@ -1,6 +1,40 @@
 import pygame
+from abc import ABC, abstractmethod
+from enum import Enum
 
-class Entity:
+class EntityCreator: #Creator Class
+    
+    @abstractmethod
+    def createRenderable(game, e_type, pos, size):
+        ''' Generate the entity to be displayed on screen'''
+        pass
+
+class Creator(EntityCreator): #Concrete Creator
+    
+    class TipoBloque(Enum):
+        # name           # value
+        PLAYER           = Player()
+        CHARACTER        = Character()
+        COLLECTABLE      = Collectable()
+    
+    def createEntity(self, type):
+        return type.value
+
+
+class IRenderable(ABC): 
+    
+    def update(self, tilemap, movement = (0,0)):
+        pass
+    
+    def render(self, surf,  offset=(0,0)):
+        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - 8 - offset[1] + self.anim_offset[1]))
+        
+
+class Player(IRenderable):
+    
+
+    
+class Player(IRenderable):
     def __init__(self, game, e_type, pos, size) -> None:
         self.game = game
         self.type = e_type
@@ -8,11 +42,12 @@ class Entity:
         self.size = size
         self.velocity = [0,0]
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
-
-        
         self.action = ''
         self.anim_offset = (-1, -1)
         self.flip = False
+        self.trapeze = None
+        self.jumps = 2
+        self.air_time = 0
         self.set_action('idle')
     
     def rect(self):
@@ -23,12 +58,11 @@ class Entity:
             self.action = action
             self.animation = self.game.assets[self.type + '/' + self.action].copy()
             
-
     def update(self, tilemap, movement = (0,0)):
         frame_movement = (movement[0] + self.velocity[0], movement[1] + self.velocity[1])
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
+        self.action
 
-        
         #manage horizontal 
         self.pos[0] += frame_movement[0]
         entity_rect = self.rect()
@@ -61,9 +95,6 @@ class Entity:
             self.flip = True        
 
         self.velocity[1] = self.velocity[1] + 0.1 
-        #self.velocity[1] = min(3, self.velocity[1] + 0.1 )
-
-
             
         if self.collisions['down'] or self.collisions['up'] :
             self.velocity[1] = 0
@@ -77,25 +108,7 @@ class Entity:
         if self.collisions['down']:
             self.air_time = 0
             self.jumps = 2
-    
-    def render(self, surf,  offset=(0,0)):
-        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - 8 - offset[1] + self.anim_offset[1]))
-        # surf.blit(self.game.assets['acrobat'], (self.pos[0] - offset[0], self.pos[1] - 8 - offset[1]))
-        
-class Character(Entity):
-    def __init__(self, game, e_type, pos, size) -> None:
-        super().__init__(game, e_type, pos, size)
-
-class Player(Entity):
-    def __init__(self, game, pos, size) -> None:
-        super().__init__(game,'acrobat', pos, size)
-        self.trapeze = None
-        self.jumps = 2
-        self.air_time = 0
-    
-    def update(self, tilemap, movement=(0, 0)):
-        super().update(tilemap, movement)
-
+            
         damping_factor = 0.98
         self.velocity[0] *= damping_factor
         # self.velocity[1] *= damping_factor
@@ -114,9 +127,22 @@ class Player(Entity):
                 self.velocity[0] = 0
             else:
                 self.set_action('walking')
-    
+                
     def jump(self):
         if self.jumps:
             self.velocity[1] = -3
             self.jumps -= 1
             self.air_time = 5
+        
+class StaticElement(IRenderable):
+    def __init__(self) -> None:
+        
+        
+    def update(self, tilemap, movement=(0, 0)):
+        pass
+    
+    
+
+
+    
+    
