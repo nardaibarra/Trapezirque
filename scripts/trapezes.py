@@ -43,7 +43,7 @@ class Trapeze:
     def attach_entity(self, entity):
         self.attached_entity = entity
         self.swinging = True
-        self.angular_velocity = self.attached_entity.velocity[0] * 5
+        self.angular_velocity = self.attached_entity.velocity[0] * 2
 
     def detach_entity(self):
         if self.attached_entity:
@@ -64,8 +64,10 @@ class Trapeze:
             # Pendulum physics
             g = 0.3  # Acceleration due to gravity
             angular_acceleration = -(g / self.length) * m.sin(self.angle)
-            self.angular_velocity += angular_acceleration
-            self.angle += self.angular_velocity
+            next_av = (self.angular_velocity + angular_acceleration)
+            top_av = 0.1
+            self.angular_velocity = min(next_av, top_av)
+            self.angle += min(0.3, self.angular_velocity)
 
             # # Damping (optional)
             # self.angular_velocity *= 0.99
