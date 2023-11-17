@@ -1,6 +1,6 @@
 import pygame
 import sys
-from entity import Player, Character
+from entity import EntityCreator, Player
 from tilemap import Tilemap
 from utils import load_image, load_images, Animation
 from balloons import Balloons
@@ -46,10 +46,11 @@ class Trapezirque:
         # }
         
         # self.sfx['ambience'].set_volume(0.3)
-        
-
+        self.creator = EntityCreator()
+        self.acrobat : Player = self.creator.createEntity(self, self.creator.EntityType.PLAYER, (50, 208), (16,16), 'acrobat')
+    
         self.baloons = Balloons(self,self.assets['baloons'], 16, count=10)
-        self.acrobat = Player(self, (50,208), (16,16))
+        # self.acrobat = Player(self, (50,208), (16,16))
         self.tilemap = Tilemap(self, tile_size=16)
         self.tilemap.load('map.json')
         self.characters =[]
@@ -58,9 +59,11 @@ class Trapezirque:
             if spawner['variant'] == 0:
                 self.acrobat.pos = spawner['pos']
             elif spawner['variant'] == 1:
-                self.characters.append(Character(self, 'clown', spawner['pos'],(32,16)))
+                character = self.creator.createEntity(self, self.creator.EntityType.PLAYER, spawner['pos'], (32,16), 'clown')
+                self.characters.append(character)
             elif spawner['variant'] == 2:
-                self.characters.append(Character(self, 'monkey', spawner['pos'],(32,16)))
+                character = self.creator.createEntity(self, self.creator.EntityType.PLAYER, spawner['pos'], (32,16), 'monkey')
+                self.characters.append(character)
             elif spawner['variant'] == 3:
                 self.trapezes.append(Trapeze(self,spawner['pos'], 62, 5))
         print(self.trapezes)

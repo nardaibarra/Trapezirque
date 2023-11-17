@@ -89,27 +89,4 @@ class Trapeze:
         end_y = self.position[1] + self.length * m.cos(self.angle)
         # Draw the pendulum
         pygame.draw.line(surface, (0, 0, 10), (self.position[0] - offset[0], self.position[1] - offset[1]), (end_x - offset[0], end_y - offset[1]), 4)
-        pygame.draw.circle(surface, (255, 0, 0), (round(end_x - offset[0]), round(end_y - offset[1])), self.radius)
-
-# class Trapezes:
-
-#     def __init__(self, game, count = 16) -> None:
-#         self.trapezes = []
-#         self.game = game
-
-#         for i in range(count):
-#             self.trapezes.append(Trapeze(self.game,(random.randrange(80,200), random.randrange(90,120)), 70, 5))
-
-#         # self.balloons.sort(key=lambda x: x.depth)
-    
-#     def update(self):
-#         for trapeze in self.trapezes:
-#             trapeze.update()
-
-#     def render(self, surf, offset=(0,0)):
-#         for trapeze in self.trapezes:
-#             trapeze.draw(surf, offset)
-
-#     def reset(self):
-#         for trapeze in self.trapezes:
-#             trapeze.reset()
+        pygame.draw.circle(surface, (30, 0, 0), (round(end_x - offset[0]), round(end_y - offset[1])), self.radius, 2)

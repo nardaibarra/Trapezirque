@@ -1,67 +1,50 @@
+
+from __future__ import annotations
+
 import pygame
 from abc import ABC, abstractmethod
 from enum import Enum
+import random
 
-class EntityCreator: #Creator Class
-    
-    @abstractmethod
-    def createRenderable(game, e_type, pos, size):
-        ''' Generate the entity to be displayed on screen'''
-        pass
-
-class Creator(EntityCreator): #Concrete Creator
-    
-    class TipoBloque(Enum):
-        # name           # value
-        PLAYER           = Player()
-        CHARACTER        = Character()
-        COLLECTABLE      = Collectable()
-    
-    def createEntity(self, type):
-        return type.value
-
-
+ 
 class IRenderable(ABC): 
     
     def update(self, tilemap, movement = (0,0)):
         pass
-    
-    def render(self, surf,  offset=(0,0)):
-        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - 8 - offset[1] + self.anim_offset[1]))
         
 
-class Player(IRenderable):
-    
-
-    
-class Player(IRenderable):
-    def __init__(self, game, e_type, pos, size) -> None:
+class Entity(IRenderable):
+    def __init__(self, game, pos, size, e_type) -> None:
         self.game = game
-        self.type = e_type
-        self.pos = list(pos)
+        self.pos = pos
         self.size = size
-        self.velocity = [0,0]
+        self.e_type = e_type
+        self.animation = ''
+        
+        self.velocity = [0, 0]
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
+        
         self.action = ''
         self.anim_offset = (-1, -1)
         self.flip = False
-        self.trapeze = None
-        self.jumps = 2
-        self.air_time = 0
-        self.set_action('idle')
-    
+        
+        self.set_action('idle')   
+      
+        
     def rect(self):
         return pygame.Rect(self.pos[0] , self.pos[1] , self.size[0], self.size[1])
     
     def set_action(self, action):
         if action != self.action:
             self.action = action
-            self.animation = self.game.assets[self.type + '/' + self.action].copy()
+            self.animation = self.game.assets[self.e_type + '/' + self.action].copy()
+            
+    def render(self, surf, offset=(0,0)):
+        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0], self.pos[1] - 8 - offset[1]))
             
     def update(self, tilemap, movement = (0,0)):
         frame_movement = (movement[0] + self.velocity[0], movement[1] + self.velocity[1])
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
-        self.action
 
         #manage horizontal 
         self.pos[0] += frame_movement[0]
@@ -99,16 +82,28 @@ class Player(IRenderable):
         if self.collisions['down'] or self.collisions['up'] :
             self.velocity[1] = 0
         
-        self.animation.update()
-        
+        self.animation.update()        
             
+
+class Player(Entity):
+    
+    def __init__(self, game, pos, size, e_type) -> None:
+        super().__init__(game, pos, size, e_type)
+        
+        self.trapeze = None
+        self.jumps = 2
+        self.air_time = 0
+        
+    def update(self, tilemap, movement=(0, 0)):
+        super().update(tilemap, movement)
+        
         if self.pos[1] > 300:
             self.game.game_over = True
             
         if self.collisions['down']:
             self.air_time = 0
             self.jumps = 2
-            
+        
         damping_factor = 0.98
         self.velocity[0] *= damping_factor
         # self.velocity[1] *= damping_factor
@@ -133,13 +128,40 @@ class Player(IRenderable):
             self.velocity[1] = -3
             self.jumps -= 1
             self.air_time = 5
+
+
+class Character(Entity):
+    def __init__(self, game, pos, size, e_type) -> None:
+        super().__init__(game, pos, size, e_type)    
+
         
-class StaticElement(IRenderable):
+class Creator: #Creator Class
+    
     def __init__(self) -> None:
+        self._game = None
+        self._type = None
+        self._pos = None
+        self._size = None
+    
+    @abstractmethod
+    def createEntity(self, game, type, pos, size, e_type):
+        ''' Generate the entity to be displayed on screen'''
+        pass  
+
+class EntityCreator(Creator): #Concrete Creator
+    
+    class EntityType(Enum):
+        # name           # value
+        PLAYER           = Player
+        CHARACTER        = Character
+        # COLLECTABLE      = Collectable()
+        
+    def createEntity(self, game, type, pos, size, e_type):
+        return type.value(game, pos, size, e_type)
+            
         
         
-    def update(self, tilemap, movement=(0, 0)):
-        pass
+        
     
     
 
