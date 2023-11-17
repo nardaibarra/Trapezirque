@@ -5,6 +5,8 @@ from tilemap import Tilemap
 from utils import load_image, load_images, Animation
 from balloons import Balloons
 from trapezes import Trapeze
+from pygame.locals import *
+from pygame import mixer
 
 class Trapezirque:
     def __init__(self) -> None:
@@ -22,6 +24,9 @@ class Trapezirque:
         self.lives = 3
         self.game_over = False
         self.font = pygame.font.Font(None, 20)
+        mixer.init()
+
+
 
         self.assets = {
             'welcome': load_images('welcome'),
@@ -83,8 +88,11 @@ class Trapezirque:
         intro_running = True
         index = 0
         last_switch_time = pygame.time.get_ticks()
-
+        mixer.music.load('assets/music/Trapeqzirque_start_screen.mp3')
+        mixer.music.play(-1)
         while intro_running:
+            
+
             current_time = pygame.time.get_ticks()
 
             if current_time - last_switch_time > 500:
@@ -107,11 +115,12 @@ class Trapezirque:
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
             pygame.display.update()
             self.clock.tick(60)
-
+        while pygame.mixer.get_busy():
+            pygame.time.wait(10)
         print(self.game_over)
-        
-        while True:          
-           
+        mixer.music.load('assets/music/Trapeqzirque_main.mp3')
+        mixer.music.play(-1)
+        while True:
             self.display.blit(self.assets['background'], (0,0))
 
             # Horizontal Scrolling (Right)
@@ -191,7 +200,10 @@ class Trapezirque:
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
             pygame.display.update()
             self.clock.tick(60)
-
+        # reset player
+        # Play game over music
+        mixer.music.load('assets/music/Trapeqzirque_game_over.mp3')
+        mixer.music.play()
         # Game Over Loop
         while True:
             for event in pygame.event.get():
