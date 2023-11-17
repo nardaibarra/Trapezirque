@@ -114,6 +114,7 @@ class Player(Entity):
         else:
             if movement[0] == 0:
                 self.set_action('idle')
+                self.velocity[0] = 0
             else:
                 self.set_action('walking')
     

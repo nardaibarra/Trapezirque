@@ -38,8 +38,14 @@ class Trapezirque:
             'acrobat/walking': Animation(load_images('player/walking'))
         }
         
+        # self.sfx = {
+        #     'ambience': pygame.mixer.Sound('')
+        # }
+        
+        # self.sfx['ambience'].set_volume(0.3)
+        
 
-        self.baloons = Balloons(self,self.assets['baloons'], 16, count=15)
+        self.baloons = Balloons(self,self.assets['baloons'], 16, count=10)
         self.acrobat = Player(self, (50,208), (16,16))
         self.tilemap = Tilemap(self, tile_size=16)
         self.tilemap.load('map.json')
@@ -68,6 +74,11 @@ class Trapezirque:
 
 
     def run(self) -> None:
+        
+        pygame.mixer.music.load('./assets/music/Trapeqzirque.mp3')
+        pygame.mixer.music.set_volume(0.4)
+        pygame.mixer.music.play(-1)
+        
         self.game_over == False
         intro_running = True
         index = 0
@@ -98,9 +109,9 @@ class Trapezirque:
             self.clock.tick(60)
 
         print(self.game_over)
-        while True:
+        
+        while True:          
            
-
             self.display.blit(self.assets['background'], (0,0))
 
             # Horizontal Scrolling (Right)
@@ -189,8 +200,7 @@ class Trapezirque:
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-
-                        return self.run()
+                        Trapezirque().run()
 
             self.display.blit(self.assets['game_over'], (0,0))
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
