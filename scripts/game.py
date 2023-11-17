@@ -26,8 +26,6 @@ class Trapezirque:
         self.font = pygame.font.Font(None, 20)
         mixer.init()
 
-
-
         self.assets = {
             'welcome': load_images('welcome'),
             'game_over': load_image('game_over_2.png'),

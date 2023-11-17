@@ -86,9 +86,6 @@ class Character(Entity):
     def __init__(self, game, e_type, pos, size) -> None:
         super().__init__(game, e_type, pos, size)
 
-    def update(self, tilemap, movement=(0, 0)):
-        return super().update(tilemap, movement)
-
 class Player(Entity):
     def __init__(self, game, pos, size) -> None:
         super().__init__(game,'acrobat', pos, size)
