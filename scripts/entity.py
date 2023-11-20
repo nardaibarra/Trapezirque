@@ -46,7 +46,7 @@ class Entity(IRenderable):
         frame_movement = (movement[0] + self.velocity[0], movement[1] + self.velocity[1])
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
 
-        #manage horizontal 
+        #manage horizontal REFACTOR
         self.pos[0] += frame_movement[0]
         entity_rect = self.rect()
         for rect in tilemap.physics_recs_around(self.pos):
@@ -59,7 +59,7 @@ class Entity(IRenderable):
                     self.collisions['right'] = True
                 self.pos[0] = entity_rect.x
 
-        #manage vertical 
+        #manage vertical REFACTOR
         self.pos[1] += frame_movement[1]
         entity_rect = self.rect()
         for rect in tilemap.physics_recs_around(self.pos):
