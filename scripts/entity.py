@@ -34,7 +34,7 @@ class Entity(IRenderable):
       
         
     def rect(self) -> pygame.Rect:
-        ''' Returns entity´s collision area '''
+        ''' Returns a pygame Rect representing the entity´s current position and size'''
         return pygame.Rect(self.pos[0] , self.pos[1] , self.size[0], self.size[1])
     
     def set_action(self, action) -> None:

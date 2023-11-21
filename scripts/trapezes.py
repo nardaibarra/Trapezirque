@@ -23,6 +23,7 @@ class Trapeze:
         self.vertical_velocity = 0  # Vertical velocity
 
     def rect(self):
+        ''' Returns a pygame Rect representing the trapeze´s current position and size'''
         # # Coordinates of one end of the rod
         # end_x = self.position[0] + self.length * m.sin(self.angle)
         # end_y = self.position[1] + self.length * m.cos(self.angle)
