@@ -50,7 +50,7 @@ class Entity(IRenderable):
     def update(self, tilemap, movement = (0,0)) -> None:
         ''' Update element´s position and identify interaction with the floor'''
         frame_movement = (movement[0] + self.velocity[0], movement[1] + self.velocity[1])
-        self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}
+        self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}        
         
         self.handle_movement('horizontal', tilemap, frame_movement)        
         self.handle_movement('vertical', tilemap, frame_movement)
@@ -75,7 +75,7 @@ class Entity(IRenderable):
         self.pos[axis] +=frame_movement[axis]
         entity_rect = self.rect()
         for rect in tilemap.physics_recs_around(self.pos):
-            if entity_rect.colliderect(rect) and frame_movement[axis] > 0 :
+            if entity_rect.colliderect(rect):
                 if frame_movement[axis] > 0:
                     setattr(entity_rect, orientation1, getattr(rect, orientation2))
                     self.collisions[orientation1 if direction == 'vertical' else orientation2] = True

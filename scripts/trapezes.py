@@ -54,28 +54,36 @@ class Trapeze:
 
     def update(self) -> None:
         ''' Updates the state of the trapeze, including its angle and attached entity'''
-        if self.swinging and self.attached_entity:
-            # Pendulum physics
-            g = 0.3  # Acceleration due to gravity
-            angular_acceleration = -(g / self.length) * m.sin(self.angle)
-            next_av = (self.angular_velocity + angular_acceleration)
-            top_av = 0.1
-            self.angular_velocity = min(next_av, top_av)
-            self.angle += min(0.3, self.angular_velocity)
-
-            # Gravity effect on the attached entity
-            self.vertical_velocity = min(3, self.vertical_velocity + self.gravity)
-            if self.attached_entity.collisions['bottom']:
-                self.vertical_velocity = 0
-
-            # Update the position of the attached entity
-            attached_x = self.position[0] + self.length * m.sin(self.angle)
-            attached_y = self.position[1] + self.length * m.cos(self.angle)
-
-            self.attached_entity.pos = [attached_x - (self.radius*2), attached_y - self.radius]
+        if self.swinging and self.attached_entity:            
+            self.handle_physics()
+            self.handle_gravity()
+            self.update_attached_entity()
             
+    def handle_physics(self) -> None:
+        ''' Handles the physics of the trapeze swing '''
+        g = 0.3 
+        angular_acceleration = -(g / self.length) * m.sin(self.angle)
+        next_av = (self.angular_velocity + angular_acceleration)
+        top_av = 0.1
+        self.angular_velocity = min(next_av, top_av)
+        self.angle += min(0.3, self.angular_velocity)
+        
+    def handle_gravity(self) -> None:
+        ''' Handles gravity effect on the trapeze and atached entity'''
+        self.vertical_velocity = min(3, self.vertical_velocity + self.gravity)
+        if self.attached_entity.collisions['bottom']:
+            self.vertical_velocity = 0
+            
+    def update_attached_entity(self) -> None:
+        ''' Updates the position of the entity attached to the trapeze'''
+        attached_x = self.position[0] + self.length * m.sin(self.angle)
+        attached_y = self.position[1] + self.length * m.cos(self.angle)
 
+        self.attached_entity.pos = [attached_x - (self.radius*2), attached_y - self.radius]
+            
+        
     def draw(self, surface, offset=(0, 0)) -> None:
+        ''' Draws the trapeze on the specified surface and position '''
         # Calculate pendulum's end position based on angle
         end_x = self.position[0] + self.length * m.sin(self.angle)
         end_y = self.position[1] + self.length * m.cos(self.angle)
