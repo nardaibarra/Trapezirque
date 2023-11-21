@@ -55,7 +55,12 @@ class Entity(IRenderable):
         self.handle_movement('horizontal', tilemap, frame_movement)        
         self.handle_movement('vertical', tilemap, frame_movement)
         self.handle_flips(movement)
-        self.update_velocity()      
+        
+        self.velocity[1] = self.velocity[1] + 0.1 
+            
+        if self.collisions['bottom'] or self.collisions['top'] :
+            self.velocity[1] = 0
+        
         
         self.animation.update()  
                 
@@ -86,12 +91,6 @@ class Entity(IRenderable):
         if movement[0] < 0:
             self.flip = True  
             
-    def update_velocity(self):
-        ''' Updates velocities when collisioned or when balanced'''
-        self.velocity[1] = self.velocity[1] + 0.1 
-            
-        if self.collisions['bottom'] or self.collisions['top'] :
-            self.velocity[1] = 0
         
                             
 

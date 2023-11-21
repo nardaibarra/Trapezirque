@@ -17,7 +17,7 @@ class Tilemap:
         self.tilemap = {}
         self.offgrid_tiles = []
 
-    def extract(self, id_pairs, keep=False):
+    def extract(self, id_pairs, keep=False) -> list:
         matches = []
         for tile in self.offgrid_tiles.copy():
             if(tile['type'], tile['variant']) in id_pairs:

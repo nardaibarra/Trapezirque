@@ -3,7 +3,8 @@ import math as m
 import random
 
 class Trapeze:
-    def __init__(self, game, position, length, radius):
+    ''' Create a trapeze object '''
+    def __init__(self, game, position, length, radius) -> None:
         self.game = game
         self.position = position  # Position of the pendulum's anchor point
         self.length = length
@@ -15,38 +16,29 @@ class Trapeze:
         self.gravity = 0.01  # Gravity effect
         self.vertical_velocity = 0  # Vertical velocity
 
-    def reset(self):
+    def reset(self) -> None:
+        ''' Resets the trapeze on its original state'''
         self.angle = 1.6  # Initial angle
         self.angular_velocity = 0.3
         self.swinging = True
         self.attached_entity = None
         self.vertical_velocity = 0  # Vertical velocity
 
-    def rect(self):
+    def rect(self) -> pygame.Rect:
         ''' Returns a pygame Rect representing the trapeze´s current position and size'''
-        # # Coordinates of one end of the rod
-        # end_x = self.position[0] + self.length * m.sin(self.angle)
-        # end_y = self.position[1] + self.length * m.cos(self.angle)
-
-        # # Top-left corner of the rectangle
-        # top_left_x = min(self.position[0], end_x) - self.radius
-        # top_left_y = min(self.position[1], end_y) - self.radius
-
-        # # Dimensions of the rectangle
-        # rect_width = abs(end_x - self.position[0]) + 2 * self.radius
-        # rect_height = abs(end_y - self.position[1]) + 2 * self.radius
-
-        # return pygame.Rect(top_left_x, top_left_y, rect_width, rect_height)
+        
         end_x = self.position[0] + self.length * m.sin(self.angle)
         end_y = self.position[1] + self.length * m.cos(self.angle)
         return pygame.Rect(end_x - self.radius, end_y - self.radius, self.radius * 2, self.radius * 2)
 
-    def attach_entity(self, entity):
+    def attach_entity(self, entity) -> None:
+        ''' Attaches and entity to a trapeze '''
         self.attached_entity = entity
         self.swinging = True
         self.angular_velocity = self.attached_entity.velocity[0] * 2
 
-    def detach_entity(self):
+    def detach_entity(self) -> None:
+        ''' Detaches any entity currently attached to a trapeze'''
         if self.attached_entity:
             # Calculate the pendulum's velocity components
             horizontal_velocity = self.length * self.angular_velocity * m.cos(self.angle)
@@ -60,7 +52,8 @@ class Trapeze:
             self.attached_entity = None
             self.swinging = False
 
-    def update(self):
+    def update(self) -> None:
+        ''' Updates the state of the trapeze, including its angle and attached entity'''
         if self.swinging and self.attached_entity:
             # Pendulum physics
             g = 0.3  # Acceleration due to gravity
@@ -69,9 +62,6 @@ class Trapeze:
             top_av = 0.1
             self.angular_velocity = min(next_av, top_av)
             self.angle += min(0.3, self.angular_velocity)
-
-            # # Damping (optional)
-            # self.angular_velocity *= 0.99
 
             # Gravity effect on the attached entity
             self.vertical_velocity = min(3, self.vertical_velocity + self.gravity)
@@ -83,8 +73,9 @@ class Trapeze:
             attached_y = self.position[1] + self.length * m.cos(self.angle)
 
             self.attached_entity.pos = [attached_x - (self.radius*2), attached_y - self.radius]
+            
 
-    def draw(self, surface, offset=(0, 0)):
+    def draw(self, surface, offset=(0, 0)) -> None:
         # Calculate pendulum's end position based on angle
         end_x = self.position[0] + self.length * m.sin(self.angle)
         end_y = self.position[1] + self.length * m.cos(self.angle)
