@@ -3,12 +3,14 @@ import pygame
 
 BASE_IMG_PATH = 'assets/'
 
-def load_image(path):
+def load_image(path) -> pygame.Surface:
+    ''' Loads an image from the specified path '''
     img = pygame.image.load(BASE_IMG_PATH + path).convert()
     img.set_colorkey((0, 0 ,0))
     return img
 
-def load_images(path):
+def load_images(path) -> list[pygame.Surface]:
+    ''' Loads all images from an specified directory '''
     images = []
     for img_name in sorted(os.listdir(BASE_IMG_PATH + path)):
         images.append(load_image(path + '/' + img_name))
@@ -16,6 +18,7 @@ def load_images(path):
 
 
 class Animation:
+    ''' Class animation to add movement on elements '''
     def __init__(self, images, img_dur=5, loop=True) -> None:
         self.images = images
         self.loop = loop
@@ -23,10 +26,12 @@ class Animation:
         self.done = False
         self.frame = 0
         
-    def copy(self):
+    def copy(self) -> 'Animation':
+        ''' Creates copy of the current Animation object'''
         return Animation(self.images, self.img_duration, self.loop)
     
-    def update(self):
+    def update(self) -> None:
+        ''' Updates the animation frame. Should be called periodically to animate'''
         if self.loop:
             self.frame = (self.frame + 1) % (self.img_duration * len(self.images))
         else:
@@ -34,7 +39,8 @@ class Animation:
             if self.frame >= self.img_duration * len(self.images) - 1:
                 self.done = True
     
-    def img(self):
+    def img(self) -> pygame.Surface:
+        ''' Gets the current image of the animation '''
         return self.images[int(self.frame/self.img_duration)]
     
     
