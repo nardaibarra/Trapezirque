@@ -74,7 +74,7 @@ class Trapeze:
 
             # Gravity effect on the attached entity
             self.vertical_velocity = min(3, self.vertical_velocity + self.gravity)
-            if self.attached_entity.collisions['down']:
+            if self.attached_entity.collisions['bottom']:
                 self.vertical_velocity = 0
 
             # Update the position of the attached entity

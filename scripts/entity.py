@@ -7,85 +7,96 @@ from enum import Enum
 import random
 
  
-class IRenderable(ABC): 
-    
-    def update(self, tilemap, movement = (0,0)):
+class IRenderable(ABC):
+    ''' All renderable items interface'''
+    def update(self, tilemap, movement = (0,0)) -> None:
         pass
         
 
 class Entity(IRenderable):
+    ''' Class Entity that implements the interface renderable used for players and characters'''
     def __init__(self, game, pos, size, e_type) -> None:
         self.game = game
-        self.pos = pos
+        
         self.size = size
         self.e_type = e_type
-        self.animation = ''
         
+        self.pos = pos        
         self.velocity = [0, 0]
-        self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
+        self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}
         
         self.action = ''
+        self.animation = ''        
         self.anim_offset = (-1, -1)
         self.flip = False
         
         self.set_action('idle')   
       
         
-    def rect(self):
+    def rect(self) -> pygame.Rect:
+        ''' Returns entity´s collision area '''
         return pygame.Rect(self.pos[0] , self.pos[1] , self.size[0], self.size[1])
     
-    def set_action(self, action):
+    def set_action(self, action) -> None:
+        ''' Select the action for different animations '''
         if action != self.action:
             self.action = action
             self.animation = self.game.assets[self.e_type + '/' + self.action].copy()
             
-    def render(self, surf, offset=(0,0)):
+    def render(self, surf, offset=(0,0)) -> None:
+        ''' Render the element on screen with certain animation and position '''        
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0], self.pos[1] - 8 - offset[1]))
             
-    def update(self, tilemap, movement = (0,0)):
+    def update(self, tilemap, movement = (0,0)) -> None:
+        ''' Update element´s position and identify interaction with the floor'''
         frame_movement = (movement[0] + self.velocity[0], movement[1] + self.velocity[1])
-        self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
-
-        #manage horizontal REFACTOR
-        self.pos[0] += frame_movement[0]
+        self.collisions = {'top': False, 'bottom': False, 'left': False, 'right': False}
+        
+        self.handle_movement('horizontal', tilemap, frame_movement)        
+        self.handle_movement('vertical', tilemap, frame_movement)
+        self.handle_flips(movement)
+        self.update_velocity()      
+        
+        self.animation.update()  
+                
+    
+    def handle_movement(self, direction, tilemap, frame_movement) -> None:
+        ''' Handle movement of the player in vertical and horizontal axis'''
+        if direction == 'vertical':
+            axis = 1; orientation1 = 'bottom'; orientation2 = 'top'; axisletter = 'y'
+        else:
+            axis = 0; orientation1 = 'right'; orientation2 = 'left'; axisletter = 'x'
+            
+        self.pos[axis] +=frame_movement[axis]
         entity_rect = self.rect()
         for rect in tilemap.physics_recs_around(self.pos):
-            if entity_rect.colliderect(rect):
-                if frame_movement[0] > 0:
-                    entity_rect.right = rect.left
-                    self.collisions['left'] = True
-                if frame_movement[0] < 0:
-                    entity_rect.left = rect.right
-                    self.collisions['right'] = True
-                self.pos[0] = entity_rect.x
-
-        #manage vertical REFACTOR
-        self.pos[1] += frame_movement[1]
-        entity_rect = self.rect()
-        for rect in tilemap.physics_recs_around(self.pos):
-            if entity_rect.colliderect(rect):
-                if frame_movement[1] > 0:
-                    entity_rect.bottom = rect.top
-                    self.collisions['down'] = True
-                if frame_movement[1] < 0:
-                    entity_rect.top = rect.bottom
-                    self.collisions['up'] = True
-                self.pos[1] = entity_rect.y
-
+            if entity_rect.colliderect(rect) and frame_movement[axis] > 0 :
+                if frame_movement[axis] > 0:
+                    setattr(entity_rect, orientation1, getattr(rect, orientation2))
+                    self.collisions[orientation1 if direction == 'vertical' else orientation2] = True
+                if frame_movement[axis] < 0:
+                    setattr(entity_rect, orientation2, getattr(rect, orientation1))
+                    self.collisions[orientation2 if direction == 'vertical' else orientation2] = True
+                self.pos[axis] = getattr(entity_rect, axisletter)
+                
+    def handle_flips(self, movement) -> None:
+        ''' Determines if the player turned to any side'''
         if movement[0] > 0:
             self.flip = False
         if movement[0] < 0:
-            self.flip = True        
-
+            self.flip = True  
+            
+    def update_velocity(self):
+        ''' Updates velocities when collisioned or when balanced'''
         self.velocity[1] = self.velocity[1] + 0.1 
             
-        if self.collisions['down'] or self.collisions['up'] :
+        if self.collisions['bottom'] or self.collisions['top'] :
             self.velocity[1] = 0
         
-        self.animation.update()        
-            
+                            
 
 class Player(Entity):
+    ''' Class player that inherits from Entity. Adds jump hability and manages player actions'''
     
     def __init__(self, game, pos, size, e_type) -> None:
         super().__init__(game, pos, size, e_type)
@@ -94,26 +105,22 @@ class Player(Entity):
         self.jumps = 2
         self.air_time = 0
         
-    def update(self, tilemap, movement=(0, 0)):
+    def update(self, tilemap, movement=(0, 0)) -> None:
+        '''Update players position, jumps, velocity and interactions with the floor'''
         super().update(tilemap, movement)
         
         if self.pos[1] > 300:
             self.game.game_over = True
             
-        if self.collisions['down']:
-            self.air_time = 0
-            self.jumps = 2
+        self.reset_jumps()        
         
         damping_factor = 0.98
         self.velocity[0] *= damping_factor
-        # self.velocity[1] *= damping_factor
-
-        # Stop movement if velocity is very low
-        if abs(self.velocity[0]) < 0.01:
-            self.velocity[0] = 0
-        if abs(self.velocity[1]) < 0.01:
-            self.velocity[1] = 0
-
+            
+        self.select_action(movement)
+    
+    def select_action(self, movement) ->None:
+        ''' Sets animation depending if the player is moving, jumping or static'''
         if self.air_time > 4:
             self.set_action('jump')
         else:
@@ -123,7 +130,14 @@ class Player(Entity):
             else:
                 self.set_action('walking')
                 
-    def jump(self):
+    def reset_jumps(self):
+        ''' Reset jumps when touching the ground'''
+        if self.collisions['bottom']:
+            self.air_time = 0
+            self.jumps = 2
+    
+    def jump(self) -> None:
+        '''Sets conditions when jumping'''
         if self.jumps:
             self.velocity[1] = -3
             self.jumps -= 1
@@ -131,11 +145,13 @@ class Player(Entity):
 
 
 class Character(Entity):
+    ''' Class Character that inherits from Entity'''
     def __init__(self, game, pos, size, e_type) -> None:
         super().__init__(game, pos, size, e_type)    
 
         
 class Creator: #Creator Class
+    ''' Creator class that manages any type of entity creation'''
     
     def __init__(self) -> None:
         self._game = None
@@ -149,7 +165,7 @@ class Creator: #Creator Class
         pass  
 
 class EntityCreator(Creator): #Concrete Creator
-    
+    ''' Concrete creator for entities (Player and Characters)'''
     class EntityType(Enum):
         # name           # value
         PLAYER           = Player
@@ -157,6 +173,7 @@ class EntityCreator(Creator): #Concrete Creator
         # COLLECTABLE      = Collectable()
         
     def createEntity(self, game, type, pos, size, e_type):
+        ''' Generate the entity to be displayed on screen'''        
         return type.value(game, pos, size, e_type)
             
         

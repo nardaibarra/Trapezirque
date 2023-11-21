@@ -145,7 +145,7 @@ class Trapezirque:
             score_text = self.font.render(f'Score: {self.score}', True, (0,0,0))
             self.display.blit(score_text, (10, 10))
         
-            for event in pygame.event.get():
+            for event in pygame.event.get(): 
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
