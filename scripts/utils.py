@@ -16,6 +16,17 @@ def load_images(path) -> list[pygame.Surface]:
         images.append(load_image(path + '/' + img_name))
     return images
 
+def play_sound(game, effectName):
+    effectPath = game.assets['sounds'][effectName]
+    soundEffect = pygame.mixer.Sound(effectPath)
+    soundEffect.set_volume(0.5)
+    soundEffect.play()
+
+def play_music(game, song_name):
+    pygame.mixer.music.load(game.assets['music'][song_name])
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(-1)
+
 
 class Animation:
     ''' Class animation to add movement on elements '''

@@ -3,15 +3,14 @@ from __future__ import annotations
 
 import pygame
 from abc import ABC, abstractmethod
+from utils import play_sound
 from enum import Enum
 import random
 
- 
 class IRenderable(ABC):
     ''' All renderable items interface'''
     def update(self, tilemap, movement = (0,0)) -> None:
         pass
-        
 
 class Entity(IRenderable):
     ''' Class Entity that implements the interface renderable used for players and characters'''
@@ -72,7 +71,7 @@ class Entity(IRenderable):
         else:
             axis = 0; orientation1 = 'right'; orientation2 = 'left'; axisletter = 'x'
             
-        self.pos[axis] +=frame_movement[axis]
+        self.pos[axis] += frame_movement[axis]
         entity_rect = self.rect()
         for rect in tilemap.physics_recs_around(self.pos):
             if entity_rect.colliderect(rect):
@@ -107,7 +106,8 @@ class Player(Entity):
     def update(self, tilemap, movement=(0, 0)) -> None:
         '''Update players position, jumps, velocity and interactions with the floor'''
         super().update(tilemap, movement)
-        
+        self.check_collision_with_characters()
+        self.check_collision_with_collectables()
         if self.pos[1] > 300:
             self.game.game_over = True
             
@@ -118,6 +118,32 @@ class Player(Entity):
             
         self.select_action(movement)
     
+    def check_collision_with_collectables(self):
+        '''Check for collision with characters and react accordingly'''
+        for collectable in self.game.collectables:  
+            if self.rect().colliderect(collectable.rect()):
+                play_sound(self.game, 'collect')
+                self.game.collectables.remove(collectable)
+                # self.game.decorate()
+
+    def check_collision_with_characters(self):
+        '''Check for collision with collectable and react accordingly'''
+        for character in self.game.characters:  
+            if self.rect().colliderect(character.rect()):
+                self.react_to_collision()
+    
+    def react_to_collision(self):
+        '''React to collision with a character'''
+        # Apply a force in the opposite direction
+        play_sound(self.game, 'collision')
+        if(self.flip):
+            self.velocity[0] =  3
+            self.velocity[1] = - 2
+        else:
+            self.velocity[0] = - 3
+            self.velocity[1] = - 2
+
+
     def select_action(self, movement) ->None:
         ''' Sets animation depending if the player is moving, jumping or static'''
         if self.air_time > 4:
@@ -147,6 +173,28 @@ class Character(Entity):
     ''' Class Character that inherits from Entity'''
     def __init__(self, game, pos, size, e_type) -> None:
         super().__init__(game, pos, size, e_type)    
+        self.walking = 0
+    
+    def update(self, tilemap, movement=(0, 0)) -> None:
+        if self.walking:
+            if tilemap.solid_check((self.rect().centerx + (-7 if self.flip else 7), self.pos[1]+23)):
+                if(self.collisions['right'] or self.collisions['left']):
+                    self.flip = not self.flip
+                else:
+                    movement = (movement[0] - 0.5 if self.flip else 0.5, movement[1])
+            else:
+                self.flip = not self.flip
+            self.walking = max(0, self.walking)
+        elif random.random() < 0.01:
+            self.walking = random.randint(30,120)
+        super().update(tilemap, movement = movement)
+    
+class Collectable(Entity):
+    ''' Class Collectable that inherits from Entity'''
+    def __init__(self, game, pos, size, e_type) -> None:
+        super().__init__(game, pos, size, e_type)    
+
+    
 
         
 class Creator: #Creator Class
@@ -169,18 +217,10 @@ class EntityCreator(Creator): #Concrete Creator
         # name           # value
         PLAYER           = Player
         CHARACTER        = Character
-        # COLLECTABLE      = Collectable()
+        COLLECTABLE      = Collectable
         
     def createEntity(self, game, type, pos, size, e_type):
         ''' Generate the entity to be displayed on screen'''        
         return type.value(game, pos, size, e_type)
             
         
-        
-        
-    
-    
-
-
-    
-    

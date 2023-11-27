@@ -1,9 +1,9 @@
+import random
 import pygame
 import sys
-import json
 from entity import EntityCreator, Player
 from tilemap import Tilemap
-from utils import load_image, load_images, Animation
+from utils import load_image, load_images, play_music,  Animation
 from balloons import Balloons
 from trapezes import Trapeze
 from pygame.locals import *
@@ -12,12 +12,15 @@ from enum import Enum
 from memento import GameMemento, GameCaretaker
 
 
+
 class SpawnerVariant(Enum):
     
     ACROBAT = 0
     CLOWN = 1
     MONKEY = 2
-    TRAPEZE = 3
+    COIN = 3
+    TRAPEZE = 4
+
 
 class Trapezirque:
         
@@ -26,7 +29,7 @@ class Trapezirque:
         pygame.font.init()
         pygame.display.set_caption("trapezirque")
         
-        self.record = 0
+        self.record = None
         self.W = 640 #320 
         self.H = 480 #240
         self.screen = pygame.display.set_mode((self.W,self.H))
@@ -34,9 +37,9 @@ class Trapezirque:
         self.clock = pygame.time.Clock()
         self.movement = [False, False]
         self.score = 0
-        self.lives = 3
         self.game_over = False
         self.font = pygame.font.Font(None, 20)
+        self.decoration_time = None
         mixer.init()
 
         self.assets = self.getAssets()
@@ -48,8 +51,9 @@ class Trapezirque:
         self.tilemap.load('map.json')
         self.characters =[]
         self.trapezes = []
+        self.collectables = []
         
-        for spawner in self.tilemap.extract([('spawners', 0),('spawners', 1),('spawners',2),('spawners',3)]):
+        for spawner in self.tilemap.extract([('spawners', 0),('spawners', 1),('spawners',2),('spawners',3),('spawners',4)]):
             self.handle_spawner(spawner)       
         
         self.scroll = [0,0]
@@ -57,22 +61,18 @@ class Trapezirque:
     def reset_game(self):
         self.movement = [False, False]
         self.score = 0
-        self.lives = 3 
         self.game_over = False
         self.scroll = [0, 0]
-        self.acrobat.reset()  
-        self.trapezes.reset()          
-        
+
     def run(self) -> None:
         
-        self.loadMusic('Trapeqzirque')
-        
+        self.record = caretaker.load_game().get_last_record()
         self.game_over == False
         intro_running = True
         index = 0
         last_switch_time = pygame.time.get_ticks()
         
-        self.loadMusic('Trapeqzirque_start_screen')
+        play_music(self, 'start')
        
         while intro_running:
             current_time = pygame.time.get_ticks()
@@ -87,8 +87,7 @@ class Trapezirque:
                     sys.exit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
-                        caretaker = GameCaretaker()
-                        memento = caretaker.load_memento()
+                        memento = caretaker.load_game()
                         if memento:
                             player_x, player_y, player_score = memento.get_saved_state()
                             self.acrobat.pos[0] = player_x
@@ -105,7 +104,7 @@ class Trapezirque:
         while pygame.mixer.get_busy():
             pygame.time.wait(10)
         
-        self.loadMusic('Trapeqzirque_main')
+        play_music(self, 'main')
 
         
         while True:
@@ -127,17 +126,23 @@ class Trapezirque:
             
             #update and Render
 
-            self.baloons.update()
-            self.baloons.render(self.display, offset=render_scroll)
+
             self.tilemap.render(self.display, offset=render_scroll)
 
             for character in self.characters.copy():
                 character.update(self.tilemap, (0,0))
                 character.render(self.display, offset = render_scroll)
             
+            for collectable in self.collectables.copy():
+                collectable.update(self.tilemap, (0,0))
+                collectable.render(self.display, offset = render_scroll)
+            
             for trapeze in self.trapezes.copy():
                 trapeze.update()
                 trapeze.draw(self.display, offset = render_scroll)
+            
+            self.baloons.update()
+            self.baloons.render(self.display, offset=render_scroll)
 
             self.acrobat.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             self.acrobat.render(self.display, offset=render_scroll)
@@ -157,9 +162,7 @@ class Trapezirque:
                     if event.key == pygame.K_UP:
                         self.acrobat.jump()
                     if event.key == pygame.K_q:
-                        caretaker = GameCaretaker()
-                        memento = GameMemento(self.acrobat.pos[0], self.acrobat.pos[1], self.score)
-                        caretaker.save_memento(memento)
+                        caretaker.save_game(self.acrobat.pos[0], self.acrobat.pos[1], self.score, self.record, False)
                         pygame.quit()
                         sys.exit()
                         
@@ -179,16 +182,15 @@ class Trapezirque:
                 
             if self.game_over == True:
                 self.record = max(self.record, self.score)
+                caretaker.save_game(self.acrobat.pos[0], self.acrobat.pos[1], self.score, self.record, True)
                 break
             
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
             pygame.display.update()
             self.clock.tick(60)
-        # reset player
-        # Play game over music
         
-        self.loadMusic('Trapeqzirque_game_over')
-        # Game Over Loop
+        play_music(self, 'game_over')
+
         
         while True:
             for event in pygame.event.get():
@@ -197,7 +199,6 @@ class Trapezirque:
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        self.record = self.score                        
                         Trapezirque().run()
 
             self.display.blit(self.assets['game_over'], (0,0))
@@ -214,11 +215,23 @@ class Trapezirque:
                 'circus': load_images('tiles/circus'),
                 'baloons': load_images('balloons'),
                 'spawners': load_images('tiles/spawners'),
+                'coin/idle': Animation(load_images('coin/idle'),10),
                 'monkey/idle': Animation(load_images('monkey/idle'),10),
                 'clown/idle': Animation(load_images('clown/idle'),10),
                 'acrobat/jump': Animation(load_images('player/jump')),
                 'acrobat/idle': Animation(load_images('player/idle')),
-                'acrobat/walking': Animation(load_images('player/walking'))
+                'acrobat/walking': Animation(load_images('player/walking')),
+                'music': {
+                    'start': './assets/music/Trapeqzirque_start_screen.mp3',
+                    'main': './assets/music/Trapeqzirque_main.mp3',
+                    'game_over': './assets/music/Trapeqzirque_game_over.mp3'},
+                'sounds': {
+                    'collect': './assets/sounds/collect.mp3',
+                    'collision':'./assets/sounds/collapse.mp3',
+                    'jump':'./assets/sounds/jump.wav',
+                    'balloon':'./assets/sounds/balloon.wav',
+                }
+                
             }
         
         return assets
@@ -229,19 +242,18 @@ class Trapezirque:
         if variant == SpawnerVariant.ACROBAT.value:
             self.acrobat.pos = spawner['pos']
         elif variant ==  SpawnerVariant.CLOWN.value:
-            character = self.creator.createEntity(self, self.creator.EntityType.PLAYER, spawner['pos'], (32,16), 'clown')
+            character = self.creator.createEntity(self, self.creator.EntityType.CHARACTER, spawner['pos'], (16,16), 'clown')
             self.characters.append(character)
         elif variant == SpawnerVariant.MONKEY.value:
-            character = self.creator.createEntity(self, self.creator.EntityType.PLAYER, spawner['pos'], (32,16), 'monkey')
+            character = self.creator.createEntity(self, self.creator.EntityType.CHARACTER, spawner['pos'], (16,16), 'monkey')
             self.characters.append(character)
+        elif variant == SpawnerVariant.COIN.value:
+            collectable = self.creator.createEntity(self, self.creator.EntityType.COLLECTABLE, spawner['pos'], (16,16), 'coin')
+            self.collectables.append(collectable)
         elif variant == SpawnerVariant.TRAPEZE.value:
             self.trapezes.append(Trapeze(self, spawner['pos'], 62, 5))
             
-    def loadMusic(self, musicName):
-        pygame.mixer.music.load(f'./assets/music/{musicName}.mp3')
-        pygame.mixer.music.set_volume(0.5)
-        pygame.mixer.music.play(-1)
-        
+
     def displayIntro(self, index):
         self.display.blit(self.assets['welcome'][index], (0, 0))
         record_text = self.font.render(f'Record: {self.record}', True, (0,0,0))
@@ -265,14 +277,22 @@ class Trapezirque:
         top_edge_y = self.display.get_height() * 0.2
         if self.acrobat.rect().centery < top_edge_y + self.scroll[1]:
             self.scroll[1] -= (top_edge_y + self.scroll[1] - self.acrobat.rect().centery)
-    
+     
     def downScroll(self):
         bottom_edge_y = self.display.get_height() * 0.9
         if self.acrobat.rect().centery > bottom_edge_y + self.scroll[1]:
             self.scroll[1] += (self.acrobat.rect().centery - bottom_edge_y - self.scroll[1])
        
+    def save_state(self,player_x, player_y, score, record):
+        return GameMemento(player_x, player_y, score, record)
+    
+    # def decorate(self):
+    #     self.baloons.decorate_balloons()
 
-Trapezirque().run()
+        
+game = Trapezirque()
+caretaker = GameCaretaker(game)
+game.run()
 
 
 
