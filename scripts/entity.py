@@ -17,7 +17,7 @@ class IDecorable(ABC):
 class PlayerJumpDecorator(IDecorable):
     def __init__(self, player: IDecorable):
         self.player = player
-        self.extraJumps = 5
+        self.extraJumps = 2
 
     def jump(self) -> None:
         self.player.jump()

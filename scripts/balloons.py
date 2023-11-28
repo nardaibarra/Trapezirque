@@ -4,25 +4,23 @@ import pygame
 from utils import play_sound
 
 
-      
-
 class Balloon:
     ''' Creates a new Ballon object '''
-    def __init__(self, game, pos, img, speed_x, speed_y, size) -> None:
-        self.pos = list(pos)
-        self.img = img
-        self.speed_x = speed_x
-        self.speed_y = speed_y
-        self.size = size
+    def __init__(self, game, pos: tuple, img: str, speed_x: int, speed_y: int, size:int ) -> None:
+        self.pos: list(tuple) = list(pos)
+        self.img: str = img
+        self.speed_x: int = speed_x
+        self.speed_y: int = speed_y
+        self.size: int = size
         self.game = game
-        self.alreadycollide = False
+        self.alreadycollide: bool = False
 
     def update(self) -> None:
         ''' Updates the ballon´s position based on speed '''
         self.pos[0] += self.speed_x
         self.pos[1] += self.speed_y
 
-    def render(self, surf, offset=(0,0)) -> None:
+    def render(self, surf: pygame.display, offset: tuple =(0,0)) -> None:
         ''' Renders the ballon on the given surface and position '''
         surf.blit(self.img, (self.pos[0] - offset[0], self.pos[1] - offset[1]))
 
@@ -32,20 +30,28 @@ class Balloon:
 
 class Balloons:
     ''' Class used for Ballons collections '''
+    BALLOON_MIN_POSITION = 0
+    BALLOON_MAX_POSITION = 165
+    SPEED_FACTOR_X = 0.05
+    SPEED_FACTOR_Y = 0.15
+    MAX_HEIGHT = 240
+    MIN_HEIGHT = 0
+    OFF_SCREEN_MIN = 10
+    OFF_SCREEN_MAX = 50
 
     def __init__(self, game, balloons_images, size, count = 20) -> None:
-        self.balloons_images = balloons_images
-        self.balloons = []
+        self.balloons_images: list(pygame.image) = balloons_images
+        self.balloons: list(Balloon) = []
         self.game = game
-        self.size = size
-        self.alreadycollide = False
+        self.size: int = size
+        self.alreadycollide: bool = False
 
         for _ in range(count):
             x = random.randrange(0, self.game.W/2)
             y = random.randrange(0, self.game.H/2)
             img = random.choice(self.balloons_images)
-            speed_x = -(random.random() * 0.05 + 0.05)
-            speed_y = -(random.random() * 0.05 + 0.15) 
+            speed_x = -(random.random() * self.SPEED_FACTOR_X + self.SPEED_FACTOR_X)
+            speed_y = -(random.random() * self.SPEED_FACTOR_X + self.SPEED_FACTOR_Y) 
             self.balloons.append(Balloon(self.game, (x, y), img, speed_x, speed_y, self.size))
     
     def update(self) -> None:
@@ -53,9 +59,13 @@ class Balloons:
         for balloon in self.balloons:
             balloon.update()
             
-            if balloon.pos[0] < 0 or self.game.acrobat.pos[0] - balloon.pos[0] > 165:
-                balloon.pos[0] = balloon.pos[0] + self.game.W/2 + random.randrange(10, 50)  # Off-screen to the right
-                balloon.pos[1] = random.randrange(0,240)
+            position_difference = self.game.acrobat.pos[0] - balloon.pos[0]
+                        
+            if balloon.pos[0] < self.BALLOON_MIN_POSITION or position_difference > self.BALLOON_MAX_POSITION:
+                off_screen = random.randrange(self.OFF_SCREEN_MIN, self.OFF_SCREEN_MAX) 
+                
+                balloon.pos[0] = balloon.pos[0] + self.game.W/2 + off_screen 
+                balloon.pos[1] = random.randrange(self.MIN_HEIGHT, self.MAX_HEIGHT)
             
 
     def render(self, surf, offset=(0,0)) -> None:
@@ -67,19 +77,13 @@ class Balloons:
 
             if balloon_rect.colliderect(self.game.acrobat.rect()):
                 play_sound(self.game, 'balloon')
-                self.increase_points()
-                
-                # if(self.game.decorator):
-                #     self.game.decorator.increase_double_points()
-                
-                # if(self.alreadycollide == False):
-                #     self.game.acrobat.jumps = 3                   
+                self.increase_points()                    
                     
-                    
-                self.alreadycollide = True                
-                balloon.pos[0] = balloon.pos[0] + self.game.W/2 + random.randrange(10, 50)  # Off-screen to the right
-                balloon.pos[1] = random.randrange(0,240)
+                self.alreadycollide = True  
+                off_screen = random.randrange(self.OFF_SCREEN_MIN, self.OFF_SCREEN_MAX)             
+                balloon.pos[0] = balloon.pos[0] + self.game.W/2 + off_screen  
+                balloon.pos[1] = random.randrange(self.MIN_HEIGHT,self.MAX_HEIGHT)
 
     def increase_points(self) -> None:
-        print("Increase from ballons")
+        ''' Increases points of the score when grabing ballons '''
         self.game.score += 1
