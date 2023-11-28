@@ -17,7 +17,7 @@ class PlayerJumpDecorator(IDecorable):
         ''' Overrides the jump method to provide additional jumping functionality.'''
         self.player.jump()
 
-class TripleJumpDecorator(PlayerJumpDecorator):
+class DoubleJumpDecorator(PlayerJumpDecorator):
     ''' A decorator class that extends PlayerJumpDecorator to allow for multiple jumps (triple jump).'''
     def jump(self) -> None:
         '''Implements the jump method to allow for a triple jump. Reduces the number of extra jumps with each jump.'''
