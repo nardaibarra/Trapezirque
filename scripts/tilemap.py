@@ -1,5 +1,4 @@
 import pygame
-import random
 import json
 
 NEIGHBOR_TILES = [(-1,-1),(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1),(-1,0),(0,0)]

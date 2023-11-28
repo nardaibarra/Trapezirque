@@ -1,4 +1,3 @@
-from abc import ABC
 import random
 import pygame
 from utils import play_sound

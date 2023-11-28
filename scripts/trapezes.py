@@ -1,6 +1,6 @@
 import pygame
 import math as m
-import random
+
 
 class Trapeze:
     ''' Create a trapeze object '''

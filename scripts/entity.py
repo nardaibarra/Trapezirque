@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import pygame
-from abc import ABC, abstractmethod
+from abc import ABC
 from decorator import IDecorable
 from trapezes import Trapeze
 from tilemap import Tilemap
