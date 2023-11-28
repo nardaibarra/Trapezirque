@@ -1,7 +1,7 @@
 import random
 import pygame
 import sys
-from entity import EntityCreator, Player
+from entity import EntityCreator, Player, PlayerJumpDecorator, TripleJumpDecorator
 from tilemap import Tilemap
 from utils import load_image, load_images, play_music,  Animation
 from balloons import Balloons
@@ -10,8 +10,6 @@ from pygame.locals import *
 from pygame import mixer
 from enum import Enum
 from memento import GameMemento, GameCaretaker
-
-
 
 class SpawnerVariant(Enum):
     
@@ -39,14 +37,14 @@ class Trapezirque:
         self.score = 0
         self.game_over = False
         self.font = pygame.font.Font(None, 20)
-        self.decoration_time = None
+        self.decorator = None
         mixer.init()
 
         self.assets = self.getAssets()
         self.creator = EntityCreator()
         
         self.acrobat : Player = self.creator.createEntity(self, self.creator.EntityType.PLAYER, (50, 208), (16,16), 'acrobat')
-        self.baloons = Balloons(self,self.assets['baloons'], 16, count=10)
+        self.balloons = Balloons(self,self.assets['balloons'], 16, count=10)
         self.tilemap = Tilemap(self, tile_size=16)
         self.tilemap.load('map.json')
         self.characters =[]
@@ -141,8 +139,8 @@ class Trapezirque:
                 trapeze.update()
                 trapeze.draw(self.display, offset = render_scroll)
             
-            self.baloons.update()
-            self.baloons.render(self.display, offset=render_scroll)
+            self.balloons.update()
+            self.balloons.render(self.display, offset=render_scroll)
 
             self.acrobat.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             self.acrobat.render(self.display, offset=render_scroll)
@@ -160,7 +158,12 @@ class Trapezirque:
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = True
                     if event.key == pygame.K_UP:
-                        self.acrobat.jump()
+                        if self.decorator:
+                            self.decorator.jump()                        
+                        else:
+                            self.acrobat.jump()
+                            
+                            
                     if event.key == pygame.K_q:
                         caretaker.save_game(self.acrobat.pos[0], self.acrobat.pos[1], self.score, self.record, False)
                         pygame.quit()
@@ -213,7 +216,7 @@ class Trapezirque:
                 'background': load_image('bg.png'),
                 'floor': load_images('tiles/floor'),
                 'circus': load_images('tiles/circus'),
-                'baloons': load_images('balloons'),
+                'balloons': load_images('balloons'),
                 'spawners': load_images('tiles/spawners'),
                 'coin/idle': Animation(load_images('coin/idle'),10),
                 'monkey/idle': Animation(load_images('monkey/idle'),10),
@@ -286,10 +289,11 @@ class Trapezirque:
     def save_state(self,player_x, player_y, score, record):
         return GameMemento(player_x, player_y, score, record)
     
-    # def decorate(self):
-    #     self.baloons.decorate_balloons()
+    def decorate(self):
+        print("Entré a decorate")
+        self.decorator = TripleJumpDecorator(self.acrobat)
 
-        
+
 game = Trapezirque()
 caretaker = GameCaretaker(game)
 game.run()

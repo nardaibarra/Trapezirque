@@ -7,6 +7,34 @@ from utils import play_sound
 from enum import Enum
 import random
 
+class IDecorable(ABC):
+    ''' All Decorable functions interface'''
+    
+    @abstractmethod
+    def jump(self) -> None:
+        pass
+
+class PlayerJumpDecorator(IDecorable):
+    def __init__(self, player: IDecorable):
+        self.player = player
+        self.extraJumps = 5
+
+    def jump(self) -> None:
+        self.player.jump()
+
+class TripleJumpDecorator(PlayerJumpDecorator):
+        
+    def jump(self) -> None:
+        print("Jumping from decorator")
+        if self.extraJumps:
+            self.player.velocity[1] = -3
+            self.extraJumps -= 1
+            self.player.air_time = 5
+        else:
+            self.player.game.decorator = None
+        
+
+
 class IRenderable(ABC):
     ''' All renderable items interface'''
     def update(self, tilemap, movement = (0,0)) -> None:
@@ -93,7 +121,7 @@ class Entity(IRenderable):
         
                             
 
-class Player(Entity):
+class Player(Entity, IDecorable):
     ''' Class player that inherits from Entity. Adds jump hability and manages player actions'''
     
     def __init__(self, game, pos, size, e_type) -> None:
@@ -123,13 +151,14 @@ class Player(Entity):
         for collectable in self.game.collectables:  
             if self.rect().colliderect(collectable.rect()):
                 play_sound(self.game, 'collect')
+                self.game.decorate()
                 self.game.collectables.remove(collectable)
-                # self.game.decorate()
 
     def check_collision_with_characters(self):
         '''Check for collision with collectable and react accordingly'''
         for character in self.game.characters:  
             if self.rect().colliderect(character.rect()):
+                self.jumps = 3
                 self.react_to_collision()
     
     def react_to_collision(self):
@@ -189,13 +218,16 @@ class Character(Entity):
             self.walking = random.randint(30,120)
         super().update(tilemap, movement = movement)
     
+    
+    
 class Collectable(Entity):
     ''' Class Collectable that inherits from Entity'''
     def __init__(self, game, pos, size, e_type) -> None:
         super().__init__(game, pos, size, e_type)    
 
-    
-
+    def update(self, tilemap, movement=(0, 0)) -> None:
+        self.animation.update()  
+        
         
 class Creator: #Creator Class
     ''' Creator class that manages any type of entity creation'''
@@ -223,4 +255,11 @@ class EntityCreator(Creator): #Concrete Creator
         ''' Generate the entity to be displayed on screen'''        
         return type.value(game, pos, size, e_type)
             
-        
+
+
+    
+    
+    # def render(self, surf, offset=(0,0)) -> None:
+    #     print("rendering balloon")
+    #     img = self.assets['baloons'][0]
+    #     surf.blit(img, (self.pos[0] - offset[0], self.pos[1] - offset[1]))

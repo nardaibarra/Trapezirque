@@ -24,7 +24,7 @@ def play_sound(game, effectName):
 
 def play_music(game, song_name):
     pygame.mixer.music.load(game.assets['music'][song_name])
-    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.set_volume(0.1)
     pygame.mixer.music.play(-1)
 
 
