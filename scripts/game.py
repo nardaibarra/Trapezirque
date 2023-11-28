@@ -47,7 +47,7 @@ class Trapezirque:
         self.tilemap = Tilemap(self, tile_size=16)
         self.tilemap.load('map.json')
         self.characters =[]
-        self.trapezes = []
+        self.trapezes: Trapeze = []
         self.collectables = []
         
         for spawner in self.tilemap.extract([('spawners', 0),('spawners', 1),('spawners',2),('spawners',3),('spawners',4)]):
