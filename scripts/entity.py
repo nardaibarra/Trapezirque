@@ -3,39 +3,13 @@ from __future__ import annotations
 
 import pygame
 from abc import ABC, abstractmethod
+from decorator import IDecorable
 from trapezes import Trapeze
 from tilemap import Tilemap
 from utils import play_sound
 from enum import Enum
 import random
 
-class IDecorable(ABC):
-    ''' Abstract base class representing an object that can be decorated with additional behavior, specifically focused on a jump behavior.'''
-    @abstractmethod
-    def jump(self) -> None:
-        pass
-
-class PlayerJumpDecorator(IDecorable):
-    ''' A decorator class for IDecorable objects that enhances the jumping ability of the player.'''
-    def __init__(self, player: IDecorable):
-        self.player: IDecorable = player
-        self.extraJumps: int = 5
-
-    def jump(self) -> None:
-        ''' Overrides the jump method to provide additional jumping functionality.'''
-        self.player.jump()
-
-class TripleJumpDecorator(PlayerJumpDecorator):
-    ''' A decorator class that extends PlayerJumpDecorator to allow for multiple jumps (triple jump).'''
-    def jump(self) -> None:
-        '''Implements the jump method to allow for a triple jump. Reduces the number of extra jumps with each jump.'''
-        if self.extraJumps:
-            self.player.velocity[1] = -3
-            self.extraJumps -= 1
-            self.player.air_time = 5
-        else:
-            self.player.game.decorator = None
-        
 
 class IRenderable(ABC):
     ''' Abstract base class representing an object that can be rendered in the game.'''
@@ -43,7 +17,9 @@ class IRenderable(ABC):
         pass
 
 class Entity(IRenderable):
+
     GRAVITY = 0.1
+    
     ''' Class Entity that implements the interface renderable used for players and characters'''
     def __init__(self, game, pos: tuple, size: int, e_type: str) -> None:
         self.game = game
@@ -196,8 +172,10 @@ class Player(Entity, IDecorable):
     def react_to_collision(self) -> None:
         '''React to collision with a character'''
         play_sound(self.game, 'collision')
+
         # Determine horizontal velocity based on flip state
         horizontal_velocity = self.COLLISION_VELOCITY_X if not self.flip else -self.COLLISION_VELOCITY_X
+        
         # Set the player's velocity
         self.velocity[0] = horizontal_velocity
         self.velocity[1] = self.COLLISION_VELOCITY_Y 
@@ -228,6 +206,14 @@ class Player(Entity, IDecorable):
 
 
 class Character(Entity):
+    
+    FLIP_CHECK_OFFSET_X = 7  
+    GROUND_CHECK_Y_OFFSET = 23  
+    WALKING_SPEED_ADJUSTMENT = 0.5  
+    RANDOM_WALK_CHANCE = 0.01  
+    MIN_WALKING_TIME = 30 
+    MAX_WALKING_TIME = 120
+
     ''' Class Character that inherits from Entity'''
     def __init__(self, game, pos: tuple, size: int, e_type: str) -> None:
         super().__init__(game, pos, size, e_type)    
@@ -235,19 +221,62 @@ class Character(Entity):
     
     def update(self, tilemap, movement=(0, 0)) -> None:
         '''Update character position, jumps, velocity and interactions with the floor'''
+        movement = self.determine_movement(tilemap, movement)
+        super().update(tilemap, movement=movement)
+
+    def determine_movement(self, tilemap, movement):
+        '''Determine character movement based on walking status and tilemap interaction.'''
         if self.walking:
-            if tilemap.solid_check((self.rect().centerx + (-7 if self.flip else 7), self.pos[1]+23)):
-                if(self.collisions['right'] or self.collisions['left']):
-                    self.flip = not self.flip
-                else:
-                    movement = (movement[0] - 0.5 if self.flip else 0.5, movement[1])
-            else:
-                self.flip = not self.flip
-            self.walking = max(0, self.walking)
-        elif random.random() < 0.01:
-            self.walking = random.randint(30,120)
-        super().update(tilemap, movement = movement)
+            movement = self.handle_walking_logic(tilemap, movement)
+        elif random.random() < self.RANDOM_WALK_CHANCE:
+            self.walking = random.randint(self.MIN_WALKING_TIME, self.MAX_WALKING_TIME)
+        return movement
     
+    def handle_walking_logic(self, tilemap, movement):
+        '''Handle walking logic including flipping direction and adjusting movement.'''
+
+        next_position = self.calculate_next_position()
+        is_solid_ground = tilemap.solid_check(next_position)
+
+        if is_solid_ground:
+            movement = self.adjust_movement_if_not_colliding(movement)
+        else:
+            self.flip_direction()
+
+        return movement
+
+    def calculate_next_position(self) -> tuple:
+        '''Calculate the character's next horizontal and vertical positions.'''
+        horizontal_direction = -1 if self.flip else 1
+        horizontal_offset = self.FLIP_CHECK_OFFSET_X * horizontal_direction
+        next_horizontal_position = self.rect().centerx + horizontal_offset
+        next_vertical_position = self.pos[1] + self.GROUND_CHECK_Y_OFFSET
+
+        return (next_horizontal_position, next_vertical_position)
+
+    def adjust_movement_if_not_colliding(self, movement) -> tuple:
+        '''Adjust movement if the character is not colliding.'''
+        if not self.is_colliding_horizontally():
+            movement = self.get_adjusted_movement(movement)
+        else:
+            self.flip_direction()
+        return movement
+
+    def is_colliding_horizontally(self) -> bool:
+        '''Check if the character is colliding horizontally.'''
+        return self.collisions['right'] or self.collisions['left']
+
+    def get_adjusted_movement(self, movement: tuple) -> bool:
+        '''Calculate adjusted movement based on walking speed.'''
+        direction_multiplier = -1 if self.flip else 1
+        horizontal_adjustment = self.WALKING_SPEED_ADJUSTMENT * direction_multiplier
+        adjusted_horizontal_movement = movement[0] + horizontal_adjustment
+        return (adjusted_horizontal_movement, movement[1])
+
+    def flip_direction(self) -> None:
+        '''Flip the character's direction.'''
+        self.flip = not self.flip
+        
     
     
 class Collectable(Entity):
@@ -260,28 +289,5 @@ class Collectable(Entity):
         self.animation.update()  
         
         
-class Creator: 
-    ''' Creator class that manages any type of entity creation'''
-    def __init__(self) -> None:
-        self._game = None
-        self._type: str = None
-        self._pos: tuple = None
-        self._size: int = None
-    
-    @abstractmethod
-    def create_entity(self, game, type: str, pos: tuple, size: int, e_type: str) -> Entity:
-        ''' Generate the entity to be displayed on screen'''
-        pass  
 
-class EntityCreator(Creator): 
-    ''' Concrete creator for entities'''
-    class EntityType(Enum):
-        # name           # value
-        PLAYER           = Player
-        CHARACTER        = Character
-        COLLECTABLE      = Collectable
-        
-    def create_entity(self, game, type: str, pos: tuple, size: int, e_type: str) -> Entity:
-        ''' Generate the entity to be displayed on screen'''        
-        return type.value(game, pos, size, e_type)
             

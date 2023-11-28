@@ -1,7 +1,8 @@
 import random
 import pygame
 import sys
-from entity import EntityCreator, Player, PlayerJumpDecorator, TripleJumpDecorator
+from factory import EntityCreator, Player
+from decorator import TripleJumpDecorator
 from tilemap import Tilemap
 from utils import load_image, load_images, play_music,  Animation
 from balloons import Balloons
