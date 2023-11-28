@@ -41,18 +41,26 @@ class Balloons:
 
     def __init__(self, game, balloons_images, size, count = 20) -> None:
         self.balloons_images: list(pygame.image) = balloons_images
-        self.balloons: list(Balloon) = []
         self.game = game
         self.size: int = size
-        self.alreadycollide: bool = False
+        self.balloons: list[Balloon] = self.initialize_ballons(count)
 
+       
+    
+    def initialize_ballons(self, count):
+        balloons = []
         for _ in range(count):
             x = random.randrange(0, self.game.W/2)
             y = random.randrange(0, self.game.H/2)
             img = random.choice(self.balloons_images)
             speed_x = -(random.random() * self.SPEED_FACTOR_X + self.SPEED_FACTOR_X)
             speed_y = -(random.random() * self.SPEED_FACTOR_X + self.SPEED_FACTOR_Y) 
-            self.balloons.append(Balloon(self.game, (x, y), img, speed_x, speed_y, self.size))
+            
+            balloons.append(Balloon(self.game, (x, y), img, speed_x, speed_y, self.size))
+        
+        return balloons
+        
+    
     
     def update(self) -> None:
         ''' Updates all ballons in the collection '''

@@ -46,12 +46,12 @@ class Trapezirque:
         self.creator = EntityCreator()
         
         self.acrobat : Player = self.creator.create_entity(self, self.creator.EntityType.PLAYER, (50, 208), (16,16), 'acrobat')
-        self.balloons = Balloons(self,self.assets['balloons'], 16, count=10)
+        self.balloons: Balloons = Balloons(self,self.assets['balloons'], 16, count=10)
         self.tilemap = Tilemap(self, tile_size=16)
         self.tilemap.load('map.json')
-        self.characters =[]
-        self.trapezes: Trapeze = []
-        self.collectables = []
+        self.characters: list = []
+        self.trapezes: list[Trapeze] = []
+        self.collectables: list[EntityCreator.EntityType.COLLECTABLE] = []
         
         for spawner in self.tilemap.extract([('spawners', Spawner.ACROBAT.value),('spawners', Spawner.CLOWN.value),('spawners',Spawner.MONKEY.value),('spawners',Spawner.COIN.value),('spawners',Spawner.TRAPEZE.value)]):
             self.handle_spawner(spawner)       
