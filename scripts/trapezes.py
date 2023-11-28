@@ -4,31 +4,29 @@ import random
 
 class Trapeze:
     ''' Create a trapeze object '''
-    def __init__(self, game, position, length, radius) -> None:
+    ANGLE = 5.5
+    ANGULAR_VELOCITY = -0.002
+    GRAVITY = 0.01
+    VERTICAL_VELOCITY = 0   
+    LINE_WIDTH = 4
+    
+    def __init__(self, game, position: tuple, length: int, radius:int) -> None:
         self.game = game
-        self.position = position  # Position of the pendulum's anchor point
-        self.length = length
-        self.radius = radius
-        self.angle = 5.5  # Initial angle
-        self.angular_velocity = -0.002
-        self.swinging = True
-        self.attached_entity = None
-        self.gravity = 0.01  # Gravity effect
-        self.vertical_velocity = 0  # Vertical velocity
-
-    def reset(self) -> None:
-        ''' Resets the trapeze on its original state'''
-        self.angle = 1.6  # Initial angle
-        self.angular_velocity = 0.3
-        self.swinging = True
-        self.attached_entity = None
-        self.vertical_velocity = 0  # Vertical velocity
+        self.position: tuple = position
+        self.length: int = length
+        self.radius: int = radius
+        self.angle: float = self.ANGLE 
+        self.angular_velocity: float = self.ANGULAR_VELOCITY
+        self.swinging: bool = True
+        self.attached_entity: bool = None
+        self.gravity: float = self.GRAVITY 
+        self.vertical_velocity: int = self.VERTICAL_VELOCITY 
 
     def rect(self) -> pygame.Rect:
         ''' Returns a pygame Rect representing the trapeze´s current position and size'''
         
-        end_x = self.position[0] + self.length * m.sin(self.angle)
-        end_y = self.position[1] + self.length * m.cos(self.angle)
+        end_x: float = self.position[0] + self.length * m.sin(self.angle)
+        end_y: float = self.position[1] + self.length * m.cos(self.angle)
         return pygame.Rect(end_x - self.radius, end_y - self.radius, self.radius * 2, self.radius * 2)
 
     def attach_entity(self, entity) -> None:
@@ -40,15 +38,12 @@ class Trapeze:
     def detach_entity(self) -> None:
         ''' Detaches any entity currently attached to a trapeze'''
         if self.attached_entity:
-            # Calculate the pendulum's velocity components
             horizontal_velocity = self.length * self.angular_velocity * m.cos(self.angle)
             vertical_velocity = -self.length * self.angular_velocity * m.sin(self.angle)
 
-            # Apply this velocity to the attached entity
             self.attached_entity.velocity[0] = horizontal_velocity * 2
             self.attached_entity.velocity[1] = vertical_velocity * 2
 
-            # Detach the entity
             self.attached_entity = None
             self.swinging = False
 
@@ -72,7 +67,7 @@ class Trapeze:
         ''' Handles gravity effect on the trapeze and atached entity'''
         self.vertical_velocity = min(3, self.vertical_velocity + self.gravity)
         if self.attached_entity.collisions['bottom']:
-            self.vertical_velocity = 0
+            self.vertical_velocity = self.VERTICAL_VELOCITY
             
     def update_attached_entity(self) -> None:
         ''' Updates the position of the entity attached to the trapeze'''
@@ -84,9 +79,16 @@ class Trapeze:
         
     def draw(self, surface, offset=(0, 0)) -> None:
         ''' Draws the trapeze on the specified surface and position '''
-        # Calculate pendulum's end position based on angle
-        end_x = self.position[0] + self.length * m.sin(self.angle)
-        end_y = self.position[1] + self.length * m.cos(self.angle)
-        # Draw the pendulum
-        pygame.draw.line(surface, (0, 0, 10), (self.position[0] - offset[0], self.position[1] - offset[1]), (end_x - offset[0], end_y - offset[1]), 4)
+        
+        end_x: float = self.position[0] + self.length * m.sin(self.angle)
+        end_y: float = self.position[1] + self.length * m.cos(self.angle)
+
+        pygame.draw.line(surface, (0, 0, 10), self.calculate_start_position(offset), self.calculate_bottom_position(offset, end_x, end_y), self.LINE_WIDTH)
         pygame.draw.circle(surface, (30, 0, 0), (round(end_x - offset[0]), round(end_y - offset[1])), self.radius, 2)
+
+    
+    def calculate_start_position(self, offset):
+        return (self.position[0] - offset[0], self.position[1] - offset[1])
+    
+    def calculate_bottom_position(self, offset, end_x, end_y):
+        return (end_x - offset[0], end_y - offset[1])

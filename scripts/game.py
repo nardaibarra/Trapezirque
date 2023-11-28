@@ -21,8 +21,7 @@ class SpawnerVariant(Enum):
     TRAPEZE = 4
 
 
-class Trapezirque:
-        
+class Trapezirque:        
     def __init__(self) -> None:
         pygame.init()
         pygame.font.init()

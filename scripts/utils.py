@@ -3,26 +3,27 @@ import pygame
 
 BASE_IMG_PATH = 'assets/'
 
-def load_image(path) -> pygame.Surface:
+def load_image(path: str) -> pygame.Surface:
     ''' Loads an image from the specified path '''
     img = pygame.image.load(BASE_IMG_PATH + path).convert()
     img.set_colorkey((0, 0 ,0))
     return img
 
-def load_images(path) -> list[pygame.Surface]:
+def load_images(path: str) -> list[pygame.Surface]:
     ''' Loads all images from an specified directory '''
     images = []
     for img_name in sorted(os.listdir(BASE_IMG_PATH + path)):
         images.append(load_image(path + '/' + img_name))
     return images
 
-def play_sound(game, effectName):
+def play_sound(game, effectName: str) -> None:
     effectPath = game.assets['sounds'][effectName]
     soundEffect = pygame.mixer.Sound(effectPath)
     soundEffect.set_volume(0.5)
     soundEffect.play()
 
-def play_music(game, song_name):
+def play_music(game, song_name: str) -> None:
+    ''' Play the music of the game'''
     pygame.mixer.music.load(game.assets['music'][song_name])
     pygame.mixer.music.set_volume(0.1)
     pygame.mixer.music.play(-1)
@@ -30,7 +31,7 @@ def play_music(game, song_name):
 
 class Animation:
     ''' Class animation to add movement on elements '''
-    def __init__(self, images, img_dur=5, loop=True) -> None:
+    def __init__(self, images: list , img_dur: int=5, loop: bool =True) -> None:
         self.images = images
         self.loop = loop
         self.img_duration = img_dur
