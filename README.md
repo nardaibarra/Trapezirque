@@ -25,4 +25,4 @@ Game Objective:
 The main objective is to collect as many balloons as possible while swinging and jumping between trapezes.
 
 Installation:
-The game is developed in Python. To play, ensure Python is installed on your computer and run the game's main file (game.py).
+The game is developed in Python. To play, ensure Python and Pygame are installed on your computer and run the game's main file (game.py).
