@@ -43,7 +43,7 @@ class Trapezirque:
         self.assets = self.getAssets()
         self.creator = EntityCreator()
         
-        self.acrobat : Player = self.creator.createEntity(self, self.creator.EntityType.PLAYER, (50, 208), (16,16), 'acrobat')
+        self.acrobat : Player = self.creator.create_entity(self, self.creator.EntityType.PLAYER, (50, 208), (16,16), 'acrobat')
         self.balloons = Balloons(self,self.assets['balloons'], 16, count=10)
         self.tilemap = Tilemap(self, tile_size=16)
         self.tilemap.load('map.json')
@@ -245,13 +245,13 @@ class Trapezirque:
         if variant == SpawnerVariant.ACROBAT.value:
             self.acrobat.pos = spawner['pos']
         elif variant ==  SpawnerVariant.CLOWN.value:
-            character = self.creator.createEntity(self, self.creator.EntityType.CHARACTER, spawner['pos'], (16,16), 'clown')
+            character = self.creator.create_entity(self, self.creator.EntityType.CHARACTER, spawner['pos'], (16,16), 'clown')
             self.characters.append(character)
         elif variant == SpawnerVariant.MONKEY.value:
-            character = self.creator.createEntity(self, self.creator.EntityType.CHARACTER, spawner['pos'], (16,16), 'monkey')
+            character = self.creator.create_entity(self, self.creator.EntityType.CHARACTER, spawner['pos'], (16,16), 'monkey')
             self.characters.append(character)
         elif variant == SpawnerVariant.COIN.value:
-            collectable = self.creator.createEntity(self, self.creator.EntityType.COLLECTABLE, spawner['pos'], (16,16), 'coin')
+            collectable = self.creator.create_entity(self, self.creator.EntityType.COLLECTABLE, spawner['pos'], (16,16), 'coin')
             self.collectables.append(collectable)
         elif variant == SpawnerVariant.TRAPEZE.value:
             self.trapezes.append(Trapeze(self, spawner['pos'], 62, 5))
