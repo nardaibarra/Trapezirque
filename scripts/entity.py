@@ -25,7 +25,7 @@ class Entity(IRenderable):
         self.game = game
         self.size: int = size
         self.e_type: str = e_type
-        self.pos: tuple = pos        
+        self.pos: list = list(pos)        
         self.velocity: list = [0, 0]
         self.collisions: dict = {'top': False, 'bottom': False, 'left': False, 'right': False}
         self.action: str = ''

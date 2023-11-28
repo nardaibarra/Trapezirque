@@ -12,7 +12,7 @@ from pygame import mixer
 from enum import Enum
 from memento import GameMemento, GameCaretaker
 
-class SpawnerVariant(Enum):
+class Spawner(Enum):
     
     ACROBAT = 0
     CLOWN = 1
@@ -21,22 +21,24 @@ class SpawnerVariant(Enum):
     TRAPEZE = 4
 
 
-class Trapezirque:        
+class Trapezirque:
+    
+    WIDTH = 640
+    HEIGHT = 480        
+
     def __init__(self) -> None:
-        pygame.init()
-        pygame.font.init()
-        pygame.display.set_caption("trapezirque")
-        
-        self.record = None
-        self.W = 640 #320 
-        self.H = 480 #240
+        self.initialize_libs()
+
+        self.W = self.WIDTH
+        self.H = self.HEIGHT
+
+        #game settings attr
         self.screen = pygame.display.set_mode((self.W,self.H))
         self.display = pygame.Surface((self.W/2, self.H/2))
         self.clock = pygame.time.Clock()
         self.movement = [False, False]
         self.score = 0
         self.game_over = False
-        self.font = pygame.font.Font(None, 20)
         self.decorator = None
         mixer.init()
 
@@ -51,163 +53,22 @@ class Trapezirque:
         self.trapezes = []
         self.collectables = []
         
-        for spawner in self.tilemap.extract([('spawners', 0),('spawners', 1),('spawners',2),('spawners',3),('spawners',4)]):
+        for spawner in self.tilemap.extract([('spawners', Spawner.ACROBAT.value),('spawners', Spawner.CLOWN.value),('spawners',Spawner.MONKEY.value),('spawners',Spawner.COIN.value),('spawners',Spawner.TRAPEZE.value)]):
             self.handle_spawner(spawner)       
         
         self.scroll = [0,0]
 
-    def reset_game(self):
-        self.movement = [False, False]
-        self.score = 0
-        self.game_over = False
-        self.scroll = [0, 0]
+
+
 
     def run(self) -> None:
-        
-        self.record = caretaker.load_game().get_last_record()
-        self.game_over == False
-        intro_running = True
-        index = 0
-        last_switch_time = pygame.time.get_ticks()
-        
-        play_music(self, 'start')
-       
-        while intro_running:
-            current_time = pygame.time.get_ticks()
-
-            if current_time - last_switch_time > 500:
-                index = 1 - index  
-                last_switch_time = current_time
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r:
-                        memento = caretaker.load_game()
-                        if memento:
-                            player_x, player_y, player_score = memento.get_saved_state()
-                            self.acrobat.pos[0] = player_x
-                            self.acrobat.pos[1] = player_y
-                            self.score = player_score
-                            intro_running = False
-                    if event.key == pygame.K_RETURN:
-                        intro_running = False
-
-            # Display the intro image
-            self.displayIntro(index)
-            
-        
-        while pygame.mixer.get_busy():
-            pygame.time.wait(10)
-        
-        play_music(self, 'main')
-
-        
-        while True:
-            self.display.blit(self.assets['background'], (0,0))
-
-            # Horizontal Scrolling (Right)
-            self.rightScroll()
-
-            # Horizontal Scrolling (Left)
-            self.leftScroll()
-
-            # Vertical Scrolling (Down)
-            self.downScroll()
-
-            # Vertical Scrolling (Up)
-            self.upScroll()
-
-            render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
-            
-            #update and Render
-
-
-            self.tilemap.render(self.display, offset=render_scroll)
-
-            for character in self.characters.copy():
-                character.update(self.tilemap, (0,0))
-                character.render(self.display, offset = render_scroll)
-            
-            for collectable in self.collectables.copy():
-                collectable.update(self.tilemap, (0,0))
-                collectable.render(self.display, offset = render_scroll)
-            
-            for trapeze in self.trapezes.copy():
-                trapeze.update()
-                trapeze.draw(self.display, offset = render_scroll)
-            
-            self.balloons.update()
-            self.balloons.render(self.display, offset=render_scroll)
-
-            self.acrobat.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
-            self.acrobat.render(self.display, offset=render_scroll)
-            # Draw the score to the screen
-            score_text = self.font.render(f'Score: {self.score}', True, (0,0,0))
-            self.display.blit(score_text, (10, 10))
-        
-            for event in pygame.event.get(): 
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        self.movement[0] = True
-                    if event.key == pygame.K_RIGHT:
-                        self.movement[1] = True
-                    if event.key == pygame.K_UP:
-                        if self.decorator:
-                            self.decorator.jump()                        
-                        else:
-                            self.acrobat.jump()
-                            
-                            
-                    if event.key == pygame.K_q:
-                        caretaker.save_game(self.acrobat.pos[0], self.acrobat.pos[1], self.score, self.record, False)
-                        pygame.quit()
-                        sys.exit()
-                        
-                    if event.key == pygame.K_SPACE:
-                        # Check for collision with the pendulum when space is pressed
-                        for trapeze in self.trapezes:
-                            if trapeze.rect().colliderect(self.acrobat.rect()):
-                                trapeze.attach_entity(self.acrobat)
-                                self.acrobat.trapeze = trapeze
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT:
-                        self.movement[0] = False
-                    if event.key == pygame.K_RIGHT:
-                        self.movement[1] = False
-                    if event.key == pygame.K_SPACE and self.acrobat.trapeze:
-                        self.acrobat.trapeze.detach_entity()
-                
-            if self.game_over == True:
-                self.record = max(self.record, self.score)
-                caretaker.save_game(self.acrobat.pos[0], self.acrobat.pos[1], self.score, self.record, True)
-                break
-            
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
-            pygame.display.update()
-            self.clock.tick(60)
-        
+        self.reset_game()
+        self.run_intro()
+        self.start_game()
+        self.run_game_over()
         play_music(self, 'game_over')
 
-        
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
-                        Trapezirque().run()
 
-            self.display.blit(self.assets['game_over'], (0,0))
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
-            pygame.display.update()
-            self.clock.tick(60)
             
     def getAssets(self):
         assets = {
@@ -241,29 +102,35 @@ class Trapezirque:
     
     def handle_spawner(self, spawner):
         variant = spawner['variant']
-        
-        if variant == SpawnerVariant.ACROBAT.value:
-            self.acrobat.pos = spawner['pos']
-        elif variant ==  SpawnerVariant.CLOWN.value:
-            character = self.creator.create_entity(self, self.creator.EntityType.CHARACTER, spawner['pos'], (16,16), 'clown')
-            self.characters.append(character)
-        elif variant == SpawnerVariant.MONKEY.value:
-            character = self.creator.create_entity(self, self.creator.EntityType.CHARACTER, spawner['pos'], (16,16), 'monkey')
-            self.characters.append(character)
-        elif variant == SpawnerVariant.COIN.value:
-            collectable = self.creator.create_entity(self, self.creator.EntityType.COLLECTABLE, spawner['pos'], (16,16), 'coin')
-            self.collectables.append(collectable)
-        elif variant == SpawnerVariant.TRAPEZE.value:
-            self.trapezes.append(Trapeze(self, spawner['pos'], 62, 5))
+        spawner_actions = {
+            Spawner.ACROBAT.value: lambda: setattr(self.acrobat, 'pos', spawner['pos']),
+            Spawner.CLOWN.value: lambda: self.spawn_entity('clown', self.creator.EntityType.CHARACTER, self.characters, spawner),
+            Spawner.MONKEY.value: lambda: self.spawn_entity('monkey', self.creator.EntityType.CHARACTER, self.characters, spawner),
+            Spawner.COIN.value: lambda: self.spawn_entity('coin', self.creator.EntityType.COLLECTABLE, self.collectables, spawner),
+            Spawner.TRAPEZE.value: lambda: self.trapezes.append(Trapeze(self, spawner['pos'], 62, 5))
+        }
+
+        if variant in spawner_actions:
+            spawner_actions[variant]()
+
+    def spawn_entity(self, entity_type, entity_enum, entity_list, spawner):
+        entity = self.creator.create_entity(self, entity_enum, spawner['pos'], (16, 16), entity_type)
+        entity_list.append(entity)
             
 
     def displayIntro(self, index):
         self.display.blit(self.assets['welcome'][index], (0, 0))
-        record_text = self.font.render(f'Record: {self.record}', True, (0,0,0))
+        self.render_intro_text()
+
+    
+    def render_intro_text(self):
+        font = pygame.font.Font(None, 20)
+        record_text = font.render(f'Record: {self.record}', True, (0,0,0))
         self.display.blit(record_text, (10, 10))
-        self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
-        pygame.display.update()
-        self.clock.tick(60)
+        font = pygame.font.Font(None, 15)
+        load_game_text = font.render(f'Press "r" to load game', True, (0,0,0))
+        self.display.blit(load_game_text, (200, 3))
+
         
     def leftScroll(self):
         left_edge_x = self.display.get_width() * 0.2
@@ -290,8 +157,164 @@ class Trapezirque:
         return GameMemento(player_x, player_y, score, record)
     
     def decorate(self):
-        print("Entré a decorate")
         self.decorator = TripleJumpDecorator(self.acrobat)
+
+    def initialize_libs(self):
+        pygame.init()
+        pygame.font.init()
+        mixer.init()
+        pygame.display.set_caption("trapezirque")
+    
+    def reset_game(self):
+        self.record = caretaker.load_game().get_last_record()
+        self.game_over == False
+    
+    def run_intro(self):
+        play_music(self, 'start')
+        intro_running = True
+        index = 0
+        last_switch_time = pygame.time.get_ticks()
+        while intro_running:
+            current_time = pygame.time.get_ticks()
+
+            if current_time - last_switch_time > 500:
+                index = 1 - index  
+                last_switch_time = current_time
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        memento = caretaker.load_game()
+                        if memento:
+                            player_x, player_y, player_score = memento.get_saved_state()
+                            self.acrobat.pos[0] = player_x
+                            self.acrobat.pos[1] = player_y
+                            self.score = player_score
+                            intro_running = False
+                    if event.key == pygame.K_RETURN:
+                        intro_running = False
+
+            self.displayIntro(index)
+            self.update_display()
+
+    def start_game(self):
+        play_music(self, 'main')
+        while True:
+            self.display.blit(self.assets['background'], (0,0))
+            self.rightScroll()
+            self.leftScroll()
+            self.downScroll()
+            self.upScroll()
+            render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
+            self.tilemap.render(self.display, offset=render_scroll)
+            self.update_and_render_elements(render_scroll)
+            self.render_game_text()
+
+        
+            for event in pygame.event.get(): 
+                if event.type == pygame.QUIT:
+                    self.quit_game()
+                if event.type == pygame.KEYDOWN:
+                    self.handle_keydown(event)
+                if event.type == pygame.KEYUP:
+                    self.handle_keyup(event)
+            if self.game_over:
+                self.handle_gameover()
+                break
+            
+            self.update_display()
+
+
+    def update_and_render_elements(self, render_scroll):
+        for character in self.characters.copy():
+            character.update(self.tilemap, (0,0))
+            character.render(self.display, offset = render_scroll)
+        
+        for collectable in self.collectables.copy():
+            collectable.update(self.tilemap, (0,0))
+            collectable.render(self.display, offset = render_scroll)
+        
+        for trapeze in self.trapezes.copy():
+            trapeze.update()
+            trapeze.draw(self.display, offset = render_scroll)
+        
+        self.balloons.update()
+        self.balloons.render(self.display, offset=render_scroll)
+
+        self.acrobat.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
+        self.acrobat.render(self.display, offset=render_scroll)
+
+    def render_game_text(self):
+        font = pygame.font.Font(None, 20)
+        score_text = font.render(f'Score: {self.score}', True, (0,0,0))
+        self.display.blit(score_text, (10, 10))
+        font = pygame.font.Font(None, 15)
+        save_game_text = font.render(f'"q" to save and exit', True, (0,0,0))
+        self.display.blit(save_game_text, (110, 3))
+
+    def run_game_over(self):
+        play_music(self, 'game_over')
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        Trapezirque().run()
+
+            self.display.blit(self.assets['game_over'], (0,0))
+            self.update_display()
+
+    def handle_jump(self):
+        if self.decorator:
+            self.decorator.jump()                        
+        else:
+            self.acrobat.jump()
+    
+    def handle_swing(self):
+        for trapeze in self.trapezes:
+            if trapeze.rect().colliderect(self.acrobat.rect()):
+                trapeze.attach_entity(self.acrobat)
+                self.acrobat.trapeze = trapeze
+    
+    def handle_keydown(self, event):
+        if event.key == pygame.K_LEFT:
+            self.movement[0] = True
+        if event.key == pygame.K_RIGHT:
+            self.movement[1] = True
+        if event.key == pygame.K_UP:
+            self.handle_jump()
+        if event.key == pygame.K_q:
+            caretaker.save_game(self.acrobat.pos[0], self.acrobat.pos[1], self.score, self.record, False)
+            self.quit_game()
+        if event.key == pygame.K_SPACE:
+            self.handle_swing()
+
+    def handle_keyup(self, event):
+        if event.key == pygame.K_LEFT:
+            self.movement[0] = False
+        if event.key == pygame.K_RIGHT:
+            self.movement[1] = False
+        if event.key == pygame.K_SPACE and self.acrobat.trapeze:
+            self.acrobat.trapeze.detach_entity()
+
+    def handle_gameover(self):
+        self.record = max(self.record, self.score)
+        caretaker.save_game(self.acrobat.pos[0], self.acrobat.pos[1], self.score, self.record, True)
+
+    def update_display(self):
+        self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
+        pygame.display.update()
+        self.clock.tick(60)
+
+
+    def quit_game(self):
+        pygame.quit()
+        sys.exit()
 
 
 game = Trapezirque()

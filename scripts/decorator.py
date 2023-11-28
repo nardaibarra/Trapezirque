@@ -11,7 +11,7 @@ class PlayerJumpDecorator(IDecorable):
     ''' A decorator class for IDecorable objects that enhances the jumping ability of the player.'''
     def __init__(self, player: IDecorable):
         self.player: IDecorable = player
-        self.extraJumps: int = 5
+        self.extraJumps: int = 2
 
     def jump(self) -> None:
         ''' Overrides the jump method to provide additional jumping functionality.'''
