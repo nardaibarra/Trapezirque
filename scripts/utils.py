@@ -3,6 +3,36 @@ import pygame
 
 BASE_IMG_PATH = 'assets/'
 
+def get_assets():
+    assets = {
+            'welcome': load_images('welcome'),
+            'game_over': load_image('game_over_2.png'),
+            'background': load_image('bg.png'),
+            'floor': load_images('tiles/floor'),
+            'circus': load_images('tiles/circus'),
+            'balloons': load_images('balloons'),
+            'spawners': load_images('tiles/spawners'),
+            'coin/idle': Animation(load_images('coin/idle'),10),
+            'monkey/idle': Animation(load_images('monkey/idle'),10),
+            'clown/idle': Animation(load_images('clown/idle'),10),
+            'acrobat/jump': Animation(load_images('player/jump')),
+            'acrobat/idle': Animation(load_images('player/idle')),
+            'acrobat/walking': Animation(load_images('player/walking')),
+            'music': {
+                'start': './assets/music/Trapeqzirque_start_screen.mp3',
+                'main': './assets/music/Trapeqzirque_main.mp3',
+                'game_over': './assets/music/Trapeqzirque_game_over.mp3'},
+            'sounds': {
+                'collect': './assets/sounds/collect.mp3',
+                'collision':'./assets/sounds/collapse.mp3',
+                'jump':'./assets/sounds/jump.wav',
+                'balloon':'./assets/sounds/balloon.wav',
+            }
+            
+        }
+    
+    return assets
+
 def load_image(path: str) -> pygame.Surface:
     ''' Loads an image from the specified path '''
     img = pygame.image.load(BASE_IMG_PATH + path).convert()
